@@ -57,9 +57,9 @@ export const mockQuestions: Omit<Question, 'id'>[] = [
 ];
 
 export const mockLeaderboard: Omit<ScoreEntry, 'id'>[] = [
-  { sessionId: 's1', nickname: 'PlayerOne', score: 5, totalTimeMs: 35000, createdAt: Date.now() - 100000 },
-  { sessionId: 's2', nickname: 'CosmicRider', score: 4, totalTimeMs: 28000, createdAt: Date.now() - 200000 },
-  { sessionId: 's3', nickname: 'DataQueen', score: 4, totalTimeMs: 32000, createdAt: Date.now() - 50000 },
-  { sessionId: 's4', nickname: 'SynthWave', score: 3, totalTimeMs: 40000, createdAt: Date.now() - 300000 },
-  { sessionId: 's5', nickname: 'LogicLord', score: 2, totalTimeMs: 25000, createdAt: Date.now() - 150000 },
+  { nickname: 'PlayerOne', score: 5, totalTimeMs: 35000, createdAt: Date.now() - 100000 },
+  { nickname: 'CosmicRider', score: 4, totalTimeMs: 28000, createdAt: Date.now() - 200000 },
+  { nickname: 'DataQueen', score: 4, totalTimeMs: 32000, createdAt: Date.now() - 50000 },
+  { nickname: 'SynthWave', score: 3, totalTimeMs: 40000, createdAt: Date.now() - 300000 },
+  { nickname: 'LogicLord', score: 2, totalTimeMs: 25000, createdAt: Date.now() - 150000 },
 ];
