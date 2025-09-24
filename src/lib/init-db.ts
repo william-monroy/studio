@@ -5,11 +5,18 @@ import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { mockQuestions } from './mock-data';
 
+let isInitialized = false;
+
 export async function initializeDatabase() {
-    if (process.env.NODE_ENV !== 'development') {
-        console.log("Skipping DB initialization in non-development environment.");
+    if (process.env.NODE_ENV !== 'development' || isInitialized) {
+        if (isInitialized) {
+            console.log("Database initialization already attempted in this session.");
+        }
         return;
     }
+
+    console.log("Checking database initialization...");
+    isInitialized = true; // Mark as attempted for this session
 
     try {
         const questionsCollection = collection(db, "questions");
@@ -25,5 +32,6 @@ export async function initializeDatabase() {
         }
     } catch (error) {
         console.error("Error initializing database:", error);
+        isInitialized = false; // Allow re-attempt if it failed
     }
 }
