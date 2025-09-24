@@ -7,9 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateQuestion } from '@/lib/actions';
+import { updateQuestion, getQuestion } from '@/lib/actions';
 import type { Question } from '@/lib/types';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -20,21 +22,90 @@ function SubmitButton() {
     );
 }
 
-function ErrorMessage({ messages }: { messages?: string[] }) {
-    if (!messages || messages.length === 0) return null;
+function LoadingSkeleton() {
     return (
-        <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-1 text-sm font-medium text-destructive"
-        >
-            {messages.join(', ')}
-        </motion.p>
+        <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-8 w-48" />
+                <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                    <Skeleton className="h-9 w-24" />
+                    <Skeleton className="h-9 w-28" />
+                </div>
+            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-7 w-1/2" />
+                    <Skeleton className="h-5 w-1/3 mt-1" />
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-6">
+                        <div className="grid gap-3">
+                            <Skeleton className="h-5 w-24" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                           <div className="grid gap-3">
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-10 w-full" />
+                           </div>
+                           <div className="grid gap-3">
+                                <Skeleton className="h-5 w-32" />
+                                <Skeleton className="h-10 w-full" />
+                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                           <div className="grid gap-3">
+                                <Skeleton className="h-5 w-36" />
+                                <Skeleton className="h-10 w-full" />
+                           </div>
+                           <div className="grid gap-3">
+                                <Skeleton className="h-5 w-36" />
+                                <Skeleton className="h-10 w-full" />
+                           </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 }
 
-export function EditQuestionForm({ question }: { question: Question }) {
+export function EditQuestionForm({ id }: { id: string }) {
     const router = useRouter();
+    const [question, setQuestion] = useState<Question | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getQuestion(id)
+            .then(data => {
+                setQuestion(data);
+                setLoading(false);
+            })
+            .catch(() => {
+                setLoading(false);
+            });
+    }, [id]);
+
+
+    if (loading) {
+        return <LoadingSkeleton />;
+    }
+
+    if (!question) {
+        return (
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
+                <div className="flex flex-col items-center gap-1 text-center">
+                    <h3 className="text-2xl font-bold tracking-tight font-headline">
+                        Question not found
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                        The requested question with ID "{id}" does not exist.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    
     const updateQuestionWithId = updateQuestion.bind(null, question.id);
 
     return (
