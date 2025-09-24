@@ -145,10 +145,9 @@ export async function createQuestion(formData: FormData) {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        // Handle validation errors, maybe return them to the user
-        // For simplicity, we'll just log them for now
         console.error(validation.error.flatten().fieldErrors);
-        return; // Or throw an error
+        // This is a simple way to return errors, a real app might handle this differently
+        return;
     }
     
     const questionsCollection = collection(db, "questions");
@@ -165,7 +164,7 @@ export async function createQuestion(formData: FormData) {
     } catch (e) {
         console.error("Error creating question:", e);
         // Handle database error
-        return; // Or throw an error
+        return;
     }
 
     revalidatePath('/admin/questions');
