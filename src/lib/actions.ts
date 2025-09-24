@@ -6,6 +6,7 @@ import { evaluateAnswerFeedback } from '@/ai/flows/evaluate-answer-feedback';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { GameAnswer, GameSession, ScoreEntry, Question } from './types';
+import { revalidatePath } from 'next/cache';
 
 const nicknameSchema = z.string().min(2, "El nickname debe tener al menos 2 caracteres.").max(16, "El nickname no puede tener más de 16 caracteres.");
 
@@ -222,6 +223,3 @@ export async function deleteQuestion(id: string) {
     }
     redirect('/admin/questions');
 }
-
-// Revalidate path function to be added if not already present
-import { revalidatePath } from 'next/cache';
