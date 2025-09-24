@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Gamepad, Home } from 'lucide-react';
 import type { ScoreEntry } from '@/lib/types';
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGameStore } from '@/store/game-store';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
