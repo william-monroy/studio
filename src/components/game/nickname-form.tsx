@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
 import { motion } from 'framer-motion';
 import { User, Play } from 'lucide-react';
 
@@ -9,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGameStore } from '@/store/game-store';
-import { useEffect } from 'react';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -22,7 +22,7 @@ function SubmitButton() {
 }
 
 export function NicknameForm() {
-  const [state, formAction] = useFormState(startGame, { error: null });
+  const [state, formAction] = useActionState(startGame, { error: null });
   const setNickname = useGameStore((state) => state.setNickname);
   const resetGame = useGameStore((state) => state.reset);
   
