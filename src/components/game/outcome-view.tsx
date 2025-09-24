@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import { useImageCache } from '@/hooks/use-image-cache';
 
 type OutcomeViewProps = {
   outcome: 'SUCCESS' | 'FAIL';
@@ -12,6 +13,10 @@ type OutcomeViewProps = {
 
 export function OutcomeView({ outcome, feedback, mediaUrl }: OutcomeViewProps) {
   const isSuccess = outcome === 'SUCCESS';
+  const { getCachedUrl } = useImageCache();
+  
+  // Usar la URL cacheada si está disponible
+  const optimizedMediaUrl = getCachedUrl(mediaUrl);
   
   return (
     <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-8">
@@ -31,12 +36,13 @@ export function OutcomeView({ outcome, feedback, mediaUrl }: OutcomeViewProps) {
           {/* Media Section - Responsive aspect ratio */}
           <div className="aspect-video sm:aspect-[16/10] md:aspect-video relative w-full overflow-hidden">
             <Image 
-              src={mediaUrl} 
+              src={optimizedMediaUrl} 
               alt={feedback} 
               fill 
               className="object-cover" 
               data-ai-hint={isSuccess ? 'success celebration' : 'failure disappointment'}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+              priority
             />
           </div>
           

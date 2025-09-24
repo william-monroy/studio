@@ -23,21 +23,37 @@ export async function startGame(prevState: any, formData: FormData): Promise<{su
   
   try {
     // Get all questions first, then filter and sort in memory to avoid index requirement
-    const questionsSnapshot = await getDocs(collection(db, 'questions'));
-    const allQuestions: Question[] = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+    const allQuestions = await getQuestions();
+    console.log(`Total questions in database: ${allQuestions.length}`);
+    console.log('Questions data:', allQuestions.map(q => ({ id: q.id, text: q.text.substring(0, 50), active: q.active })));
     
-    // Filter active questions and sort by order
+    // Check if any questions don't have the active field and set them to active
+    for (const question of allQuestions) {
+      if (question.active === undefined || question.active === null) {
+        console.log(`Setting question ${question.id} as active`);
+        await updateDoc(doc(db, 'questions', question.id), { active: true });
+        question.active = true; // Update local copy
+      }
+    }
+    
     const questions = allQuestions
       .filter(q => q.active === true)
       .sort((a, b) => a.order - b.order);
     
+    console.log(`Active questions found: ${questions.length}`);
+    
     if (questions.length === 0) {
         console.warn("No active questions found.");
+        // If no active questions but there are questions, let's use all questions as fallback
+        if (allQuestions.length > 0) {
+          console.log("Using all questions as fallback since no active questions found");
+          const fallbackQuestions = allQuestions.sort((a, b) => a.order - b.order);
+          return { success: true, questions: fallbackQuestions };
+        }
         return { success: false, error: "No hay preguntas activas en este momento. Inténtalo más tarde." };
     }
 
     console.log(`Found ${questions.length} active questions.`);
-
     return { success: true, questions };
 
   } catch (error: any) {
@@ -246,6 +262,55 @@ export async function clearLeaderboard(): Promise<{ success: boolean; message: s
     return { 
       success: false, 
       message: 'Error al limpiar el leaderboard. Inténtalo de nuevo.' 
+    };
+  }
+}
+
+export async function initializeQuestionsFields(): Promise<{ success: boolean; message: string }> {
+  try {
+    const allQuestions = await getQuestions();
+    let updatedCount = 0;
+    
+    for (const question of allQuestions) {
+      const updates: any = {};
+      let needsUpdate = false;
+      
+      // Check and set active field
+      if (question.active === undefined || question.active === null) {
+        updates.active = true;
+        needsUpdate = true;
+      }
+      
+      // Check and set order field
+      if (question.order === undefined || question.order === null) {
+        updates.order = updatedCount + 1;
+        needsUpdate = true;
+      }
+      
+      // Check and set updatedAt field
+      if (question.updatedAt === undefined || question.updatedAt === null) {
+        updates.updatedAt = Date.now();
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
+        await updateDoc(doc(db, 'questions', question.id), updates);
+        updatedCount++;
+        console.log(`Updated question ${question.id} with fields:`, updates);
+      }
+    }
+    
+    revalidatePath('/admin/questions');
+    
+    return {
+      success: true,
+      message: `Se actualizaron ${updatedCount} preguntas con campos faltantes.`
+    };
+  } catch (error) {
+    console.error('Error initializing questions fields:', error);
+    return {
+      success: false,
+      message: 'Error al inicializar los campos de las preguntas.'
     };
   }
 }

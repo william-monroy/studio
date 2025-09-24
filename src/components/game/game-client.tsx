@@ -8,6 +8,8 @@ import { evaluateAnswer } from '@/lib/actions';
 
 import { QuestionView } from './question-view';
 import { OutcomeView } from './outcome-view';
+import { AdvancedImagePreloader } from './advanced-image-preloader';
+import { CacheStatusIndicator } from './cache-status-indicator';
 import Confetti from '../confetti';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,35 +22,7 @@ type Outcome = {
   mediaUrl: string;
 };
 
-function ImagePreloader({ imageUrls, onLoaded }: { imageUrls: string[], onLoaded: () => void }) {
-  useEffect(() => {
-    let loadedCount = 0;
-    if (imageUrls.length === 0) {
-      onLoaded();
-      return;
-    }
-
-    imageUrls.forEach((url) => {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === imageUrls.length) {
-          onLoaded();
-        }
-      };
-      img.onerror = () => {
-        // Even if an image fails, we count it as "loaded" to not block the game
-        loadedCount++;
-        if (loadedCount === imageUrls.length) {
-          onLoaded();
-        }
-      }
-    });
-  }, [imageUrls, onLoaded]);
-
-  return null; // This component doesn't render anything
-}
+// Removed old ImagePreloader - now using AdvancedImagePreloader
 
 
 export default function GameClient() {
@@ -148,17 +122,23 @@ export default function GameClient() {
 
   if (!imagesLoaded) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-background">
-        <ImagePreloader imageUrls={imageUrlsToPreload} onLoaded={() => setImagesLoaded(true)} />
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
-        <p className="mt-4 font-headline text-xl">Optimizando recursos...</p>
-      </div>
+      <AdvancedImagePreloader 
+        imageUrls={imageUrlsToPreload} 
+        onLoaded={() => setImagesLoaded(true)}
+        title="Preparando DecisionVerse"
+        subtitle="Descargando imágenes para una experiencia sin interrupciones"
+      />
     );
   }
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-background to-accent/30 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
       <Progress value={progressValue} className="fixed top-0 left-0 right-0 h-1 sm:h-2 w-full rounded-none z-50" />
+      <CacheStatusIndicator 
+        totalImages={imageUrlsToPreload.length}
+        loadedImages={imageUrlsToPreload.length} // Asumimos que están cargadas si llegamos aquí
+        showWhenComplete={false}
+      />
       {showConfetti && <Confetti />}
       <AnimatePresence mode="wait">
         {status === 'playing' && (

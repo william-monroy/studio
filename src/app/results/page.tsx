@@ -105,7 +105,7 @@ export default function ResultsPage() {
       {leaderboard ? (
         <div className="my-12">
           <h2 className="text-4xl font-headline font-bold text-center text-primary mb-6">
-            Tabla de Líderes
+            Tabla de clasificación
           </h2>
           <LeaderboardTable scores={leaderboard} />
         </div>

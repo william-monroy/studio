@@ -1,6 +1,8 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClearLeaderboardButton } from "@/components/admin/clear-leaderboard-button";
+import { InitializeQuestionsButton } from "@/components/admin/initialize-questions-button";
+import { ClearImageCacheButton } from "@/components/admin/clear-image-cache-button";
 import { Users, HelpCircle, BarChart3, Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -27,9 +29,13 @@ export default function AdminDashboard() {
             <p className="text-xs text-muted-foreground mb-4">
               Crear, editar y organizar preguntas del juego
             </p>
-            <Button asChild size="sm" className="w-full">
-              <Link href="/admin/questions">Ver Preguntas</Link>
-            </Button>
+            <div className="space-y-2">
+              <Button asChild size="sm" className="w-full">
+                <Link href="/admin/questions">Ver Preguntas</Link>
+              </Button>
+              <InitializeQuestionsButton />
+              <ClearImageCacheButton />
+            </div>
           </CardContent>
         </Card>
 
