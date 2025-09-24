@@ -7,11 +7,11 @@ import { LeaderboardTable } from '@/components/game/leaderboard-table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Gamepad, Home } from 'lucide-react';
-import type { ScoreEntry } from '@/lib/types';
+import type { ScoreEntry, GameAnswer } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGameStore } from '@/store/game-store';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 function LoadingSkeleton() {
@@ -49,18 +49,22 @@ export default function ResultsPage() {
       .catch(error => console.error("Failed to save score", error))
       .finally(() => setLoading(false));
 
-    // Set up real-time listener for the leaderboard
-    const leaderboardQuery = query(
-        collection(db, 'leaderboard'),
-        orderBy('score', 'desc'),
-        orderBy('totalTimeMs', 'asc'),
-        orderBy('createdAt', 'desc'),
-        limit(50)
-    );
-
-    const unsubscribe = onSnapshot(leaderboardQuery, (snapshot) => {
-        const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ScoreEntry);
-        setLeaderboard(scores);
+    // Set up real-time listener for the leaderboard (without complex query to avoid index requirement)
+    const unsubscribe = onSnapshot(collection(db, 'leaderboard'), (snapshot) => {
+        const allScores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ScoreEntry);
+        
+        // Sort in memory to avoid index requirement
+        const sortedScores = allScores.sort((a, b) => {
+            if (a.score !== b.score) {
+                return b.score - a.score; // Higher score first
+            }
+            if (a.totalTimeMs !== b.totalTimeMs) {
+                return a.totalTimeMs - b.totalTimeMs; // Lower time first (faster)
+            }
+            return b.createdAt - a.createdAt; // More recent first
+        }).slice(0, 50); // Limit to top 50
+        
+        setLeaderboard(sortedScores);
     }, (error) => {
         console.error("Error fetching real-time leaderboard:", error);
     });
@@ -84,7 +88,12 @@ export default function ResultsPage() {
       score,
       totalTimeMs,
       questions,
-      answers,
+      answers: answers.filter((answer): answer is GameAnswer => 
+        answer.questionId !== undefined && 
+        answer.decision !== undefined && 
+        answer.outcome !== undefined && 
+        answer.timeMs !== undefined
+      ),
       startedAt: 0,
       currentQuestionIndex: 0
   }

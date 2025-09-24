@@ -1,10 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Gamepad2, BrainCircuit } from 'lucide-react';
+import { Gamepad2, BrainCircuit, Users } from 'lucide-react';
 import { NicknameForm } from './nickname-form';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function HomeClient() {
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-b from-background to-accent/50">
       <motion.div
@@ -32,6 +35,20 @@ export default function HomeClient() {
         className="w-full max-w-md mt-10"
       >
         <NicknameForm />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="mt-8"
+      >
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/credits">
+            <Users className="mr-2 h-4 w-4" />
+            Créditos
+          </Link>
+        </Button>
       </motion.div>
     </main>
   );

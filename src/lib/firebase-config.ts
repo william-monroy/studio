@@ -1,10 +1,10 @@
 
-// This is a placeholder file. The actual config will be filled in by the backend.
+// Firebase configuration using environment variables
 export const firebaseConfig = {
-  apiKey: "SET_BY_GOOGLE",
-  authDomain: "SET_BY_GOOGLE",
-  projectId: "SET_BY_GOOGLE",
-  storageBucket: "SET_BY_GOOGLE",
-  messagingSenderId: "SET_BY_GOOGLE",
-  appId: "SET_BY_GOOGLE"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID!,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!
 };

@@ -22,8 +22,14 @@ export async function startGame(prevState: any, formData: FormData): Promise<{su
   }
   
   try {
-    const questionsSnapshot = await getDocs(query(collection(db, 'questions'), where('active', '==', true), orderBy('order')));
-    const questions: Question[] = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+    // Get all questions first, then filter and sort in memory to avoid index requirement
+    const questionsSnapshot = await getDocs(collection(db, 'questions'));
+    const allQuestions: Question[] = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+    
+    // Filter active questions and sort by order
+    const questions = allQuestions
+      .filter(q => q.active === true)
+      .sort((a, b) => a.order - b.order);
     
     if (questions.length === 0) {
         console.warn("No active questions found.");
@@ -69,10 +75,11 @@ export async function saveScore(scoreData: {nickname: string, score: number, tot
   const leaderboardCol = collection(db, 'leaderboard');
 
   try {
-    await runTransaction(db, async (transaction) => {
-      const q = query(leaderboardCol, where('nickname', '==', nickname));
-      const existingScores = await transaction.get(q);
+    // First check if player exists outside transaction
+    const q = query(leaderboardCol, where('nickname', '==', nickname));
+    const existingScores = await getDocs(q);
 
+    await runTransaction(db, async (transaction) => {
       if (existingScores.empty) {
         // New player, add their score
         const newScoreRef = doc(leaderboardCol);
@@ -111,12 +118,24 @@ export async function saveScore(scoreData: {nickname: string, score: number, tot
 }
 
 export async function getLeaderboard(): Promise<ScoreEntry[]> {
-    const leaderboardQuery = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), orderBy('totalTimeMs', 'asc'), orderBy('createdAt', 'desc'), limit(50));
-    const snapshot = await getDocs(leaderboardQuery);
+    // Get all leaderboard entries and sort in memory to avoid index requirement
+    const snapshot = await getDocs(collection(db, 'leaderboard'));
     
     let scores: ScoreEntry[] = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
     
-    return scores;
+    // Sort by score (desc), then by totalTimeMs (asc), then by createdAt (desc)
+    scores.sort((a, b) => {
+        if (a.score !== b.score) {
+            return b.score - a.score; // Higher score first
+        }
+        if (a.totalTimeMs !== b.totalTimeMs) {
+            return a.totalTimeMs - b.totalTimeMs; // Lower time first (faster)
+        }
+        return b.createdAt - a.createdAt; // More recent first
+    });
+    
+    // Limit to top 50
+    return scores.slice(0, 50);
 }
 
 export async function getQuestions(): Promise<Question[]> {
@@ -199,6 +218,36 @@ export async function deleteQuestion(id: string) {
         // We throw an error to be caught by the client if needed
         throw new Error('Failed to delete question.');
     }
+}
+
+export async function clearLeaderboard(): Promise<{ success: boolean; message: string }> {
+  try {
+    const leaderboardCol = collection(db, 'leaderboard');
+    const snapshot = await getDocs(leaderboardCol);
+    
+    // Delete all documents in the leaderboard collection
+    const batch = [];
+    for (const doc of snapshot.docs) {
+      batch.push(deleteDoc(doc.ref));
+    }
+    
+    await Promise.all(batch);
+    
+    revalidatePath('/admin/players');
+    revalidatePath('/results');
+    
+    console.log(`Cleared ${snapshot.size} entries from leaderboard`);
+    return { 
+      success: true, 
+      message: `Se eliminaron ${snapshot.size} entradas del leaderboard exitosamente.` 
+    };
+  } catch (error) {
+    console.error('Error clearing leaderboard:', error);
+    return { 
+      success: false, 
+      message: 'Error al limpiar el leaderboard. Inténtalo de nuevo.' 
+    };
+  }
 }
 
 export async function getAnalyticsData() {

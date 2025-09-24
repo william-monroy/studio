@@ -60,45 +60,85 @@ export function QuestionView({
   const progress = useMemo(() => (count / question.timeLimitSec) * 100, [count, question.timeLimitSec]);
 
   return (
-    <Card className="max-w-2xl mx-auto w-full shadow-2xl border-primary/20">
-      <CardHeader>
-        <CardDescription className="font-headline">
-          Pregunta {questionNumber} de {totalQuestions}
-        </CardDescription>
-        <CardTitle className="font-headline text-3xl pt-2">
-          {question.text}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Progress value={progress} className="h-3" />
-            <span className="font-mono text-lg font-bold text-primary w-12 text-center">{count}s</span>
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Card className="w-full shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm">
+        <CardHeader className="text-center pb-4 sm:pb-6">
+          <CardDescription className="font-headline text-sm sm:text-base text-muted-foreground">
+            Pregunta {questionNumber} de {totalQuestions}
+          </CardDescription>
+          <CardTitle className="font-headline text-xl sm:text-2xl md:text-3xl lg:text-4xl pt-2 leading-tight px-2">
+            {question.text}
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="space-y-4 sm:space-y-6">
+          {/* Timer Section - Optimized for mobile */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Progress 
+                value={progress} 
+                className="h-2 sm:h-3 flex-1" 
+              />
+              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px]">
+                <span className="font-mono text-2xl sm:text-3xl font-bold text-primary">
+                  {count}
+                </span>
+                <span className="text-xs text-muted-foreground">segundos</span>
+              </div>
+            </div>
+            
+            {/* Keyboard hint - Hidden on small screens */}
+            <p className="text-xs sm:text-sm text-muted-foreground text-center hidden sm:block">
+              Usa las teclas{' '}
+              <kbd className="px-2 py-1 text-xs font-semibold bg-muted border rounded">Y</kbd>
+              {' '}para Sí y{' '}
+              <kbd className="px-2 py-1 text-xs font-semibold bg-muted border rounded">N</kbd>
+              {' '}para No.
+            </p>
+            
+            {/* Mobile hint */}
+            <p className="text-xs text-muted-foreground text-center sm:hidden">
+              Toca los botones para responder
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground text-center">
-            Usa las teclas <kbd className="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">Y</kbd> para Sí y <kbd className="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">N</kbd> para No.
-          </p>
-        </div>
-      </CardContent>
-      <CardFooter className="grid grid-cols-2 gap-4">
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            className="w-full text-lg h-16 bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleDecision('YES')}
-          >
-            <ThumbsUp className="mr-2" /> Sí
-          </Button>
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            className="w-full text-lg h-16"
-            variant="destructive"
-            onClick={() => handleDecision('NO')}
-          >
-            <ThumbsDown className="mr-2" /> No
-          </Button>
-        </motion.div>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        
+        <CardFooter className="pt-4 sm:pt-6 pb-6 sm:pb-8">
+          {/* Mobile-first button layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
+            {/* YES Button */}
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              whileTap={{ scale: 0.98 }}
+              className="order-1"
+            >
+              <Button
+                className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold bg-green-500 hover:bg-green-600 text-white shadow-lg active:shadow-md transition-all duration-200"
+                onClick={() => handleDecision('YES')}
+              >
+                <ThumbsUp className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
+                <span>Sí</span>
+              </Button>
+            </motion.div>
+            
+            {/* NO Button */}
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              whileTap={{ scale: 0.98 }}
+              className="order-2"
+            >
+              <Button
+                className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold shadow-lg active:shadow-md transition-all duration-200"
+                variant="destructive"
+                onClick={() => handleDecision('NO')}
+              >
+                <ThumbsDown className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
+                <span>No</span>
+              </Button>
+            </motion.div>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

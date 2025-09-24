@@ -14,27 +14,44 @@ export function OutcomeView({ outcome, feedback, mediaUrl }: OutcomeViewProps) {
   const isSuccess = outcome === 'SUCCESS';
   
   return (
-    <Card className="max-w-2xl mx-auto w-full shadow-2xl border-0 overflow-hidden">
-      <CardHeader className={`flex flex-row items-center gap-4 p-4 ${isSuccess ? 'bg-green-500' : 'bg-destructive'}`}>
-        {isSuccess ? (
-          <CheckCircle2 className="w-8 h-8 text-white" />
-        ) : (
-          <XCircle className="w-8 h-8 text-white" />
-        )}
-        <CardTitle className="font-headline text-3xl text-white">
-          {isSuccess ? '¡Éxito!' : 'Fracaso'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="aspect-video relative w-full overflow-hidden">
-           <Image src={mediaUrl} alt={feedback} fill className="object-cover" data-ai-hint={isSuccess ? 'success celebration' : 'failure disappointment'} />
-        </div>
-        <div className="p-6 bg-background">
-          <p className="text-center text-lg font-body text-foreground/90">
-            "{feedback}"
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-8">
+      <Card className="w-full shadow-2xl border-0 overflow-hidden bg-card/95 backdrop-blur-sm">
+        <CardHeader className={`flex flex-row items-center justify-center gap-3 sm:gap-4 p-4 sm:p-6 ${isSuccess ? 'bg-green-500' : 'bg-destructive'}`}>
+          {isSuccess ? (
+            <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 text-white flex-shrink-0" />
+          ) : (
+            <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white flex-shrink-0" />
+          )}
+          <CardTitle className="font-headline text-xl sm:text-2xl md:text-3xl text-white text-center">
+            {isSuccess ? '¡Éxito!' : 'Fracaso'}
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="p-0">
+          {/* Media Section - Responsive aspect ratio */}
+          <div className="aspect-video sm:aspect-[16/10] md:aspect-video relative w-full overflow-hidden">
+            <Image 
+              src={mediaUrl} 
+              alt={feedback} 
+              fill 
+              className="object-cover" 
+              data-ai-hint={isSuccess ? 'success celebration' : 'failure disappointment'}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+            />
+          </div>
+          
+          {/* Feedback Section - Mobile optimized */}
+          <div className="p-4 sm:p-6 md:p-8 bg-background">
+            <div className="max-w-2xl mx-auto">
+              <p className="text-center text-sm sm:text-base md:text-lg font-body text-foreground/90 leading-relaxed">
+                <span className="text-2xl sm:text-3xl text-primary">"</span>
+                {feedback}
+                <span className="text-2xl sm:text-3xl text-primary">"</span>
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

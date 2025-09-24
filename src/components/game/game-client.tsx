@@ -97,7 +97,7 @@ export default function GameClient() {
 
       const result = await evaluateAnswer(currentQuestion, decision, nickname);
 
-      const fullAnswer: GameAnswer = { ...gameAnswerTemplate, outcome: result.outcome };
+      const fullAnswer: GameAnswer = { ...gameAnswerTemplate, outcome: result.outcome as 'SUCCESS' | 'FAIL' };
       
       // Update the store with the final outcome
       useGameStore.setState(state => {
@@ -107,7 +107,7 @@ export default function GameClient() {
       });
 
       setOutcome({
-        outcome: result.outcome,
+        outcome: result.outcome as 'SUCCESS' | 'FAIL',
         feedback: result.feedback,
         mediaUrl: result.mediaUrl,
       });
@@ -157,8 +157,8 @@ export default function GameClient() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-background flex items-center justify-center p-4 overflow-hidden">
-      <Progress value={progressValue} className="fixed top-0 left-0 right-0 h-2 w-full rounded-none z-50" />
+    <div className="w-full min-h-screen bg-gradient-to-b from-background to-accent/30 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+      <Progress value={progressValue} className="fixed top-0 left-0 right-0 h-1 sm:h-2 w-full rounded-none z-50" />
       {showConfetti && <Confetti />}
       <AnimatePresence mode="wait">
         {status === 'playing' && (
