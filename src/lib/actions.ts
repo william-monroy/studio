@@ -97,6 +97,8 @@ export async function saveScore(scoreData: {nickname: string, score: number, tot
           console.log(`High score updated for ${nickname}`);
         } else {
           console.log(`Score for ${nickname} is not a high score. Not updating.`);
+          // This return is crucial to finish the transaction successfully.
+          return; 
         }
       }
     });
