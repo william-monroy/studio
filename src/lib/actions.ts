@@ -195,3 +195,47 @@ export async function deleteQuestion(id: string) {
     }
     redirect('/admin/questions');
 }
+
+export async function getAnalyticsData() {
+    // This is a placeholder for a more complex analytics query.
+    // In a real app, this could involve aggregations or more complex data fetching.
+    const questions = await getQuestions();
+    const players = await getLeaderboard();
+    
+    // This is a simplified aggregation.
+    let totalSuccess = 0;
+    let totalFail = 0;
+    
+    // In a real app, you would fetch answer data. We will simulate it.
+    // This is not efficient and is for demonstration purposes.
+    const questionDecisions = questions.map(q => {
+        const yes = Math.floor(Math.random() * 50);
+        const no = Math.floor(Math.random() * 50);
+        const success = Math.floor((yes * q.successProb) + (no * (1-q.successProb)));
+        const fail = (yes + no) - success;
+        totalSuccess += success;
+        totalFail += fail;
+
+        return {
+            questionId: q.id,
+            text: q.text,
+            yes,
+            no,
+        }
+    });
+
+    const totalGames = players.length; // Simplified
+    const averageScore = players.reduce((acc, p) => acc + p.score, 0) / (players.length || 1);
+
+    return {
+        totalPlayers: players.length,
+        totalGames,
+        averageScore: parseFloat(averageScore.toFixed(2)),
+        overallSuccessRate: parseFloat(((totalSuccess / (totalSuccess + totalFail || 1)) * 100).toFixed(2)),
+        successFailData: [
+            { name: 'Success', value: totalSuccess, fill: 'hsl(var(--chart-2))' },
+            { name: 'Fail', value: totalFail, fill: 'hsl(var(--destructive))' }
+        ],
+        questionDecisionsData: questionDecisions,
+    };
+}
