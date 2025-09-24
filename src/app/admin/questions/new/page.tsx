@@ -1,6 +1,5 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -34,17 +33,10 @@ function ErrorMessage({ messages }: { messages?: string[] }) {
 }
 
 export default function NewQuestionPage() {
-    const [state, formAction] = useActionState(createQuestion, { error: null });
     const router = useRouter();
 
-    useEffect(() => {
-        if (state?.success) {
-            router.push('/admin/questions');
-        }
-    }, [state, router]);
-
     return (
-        <form action={formAction} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
+        <form action={createQuestion} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
                     New Question
@@ -66,33 +58,27 @@ export default function NewQuestionPage() {
                         <div className="grid gap-3">
                             <Label htmlFor="text">Question Text</Label>
                             <Textarea id="text" name="text" placeholder="e.g. ¿Invertir en propiedades en el metaverso?" />
-                            <ErrorMessage messages={state?.error?.text} />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <div className="grid gap-3">
                                 <Label htmlFor="successProb">Success Probability (0.0 to 1.0)</Label>
                                 <Input id="successProb" name="successProb" type="number" step="0.1" min="0" max="1" placeholder="0.5" />
-                                <ErrorMessage messages={state?.error?.successProb} />
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="timeLimitSec">Time Limit (seconds)</Label>
                                 <Input id="timeLimitSec" name="timeLimitSec" type="number" step="1" min="5" placeholder="15" />
-                                <ErrorMessage messages={state?.error?.timeLimitSec} />
                             </div>
                         </div>
                          <div className="grid grid-cols-2 gap-6">
                             <div className="grid gap-3">
                                 <Label htmlFor="mediaPosUrl">Positive Media URL</Label>
                                 <Input id="mediaPosUrl" name="mediaPosUrl" placeholder="https://example.com/success.gif" />
-                                <ErrorMessage messages={state?.error?.mediaPosUrl} />
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="mediaNegUrl">Negative Media URL</Label>
                                 <Input id="mediaNegUrl" name="mediaNegUrl" placeholder="https://example.com/fail.gif" />
-                                <ErrorMessage messages={state?.error?.mediaNegUrl} />
                             </div>
                         </div>
-                        <ErrorMessage messages={state?.error?._general} />
                     </div>
                 </CardContent>
             </Card>

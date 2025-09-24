@@ -140,16 +140,15 @@ const questionSchema = z.object({
     mediaNegUrl: z.string().url('Por favor, introduce una URL válida.'),
 });
 
-type FormState = {
-  error: Record<string, string[]> | null;
-  success?: boolean;
-}
 
-export async function createQuestion(prevState: FormState, formData: FormData): Promise<FormState> {
+export async function createQuestion(formData: FormData) {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        return { error: validation.error.flatten().fieldErrors };
+        // Handle validation errors, maybe return them to the user
+        // For simplicity, we'll just log them for now
+        console.error(validation.error.flatten().fieldErrors);
+        return; // Or throw an error
     }
     
     const questionsCollection = collection(db, "questions");
@@ -163,17 +162,22 @@ export async function createQuestion(prevState: FormState, formData: FormData): 
             order: newOrder,
             updatedAt: Date.now(),
         });
-        return { error: null, success: true };
     } catch (e) {
-        return { error: { _general: ['Error al crear la pregunta. Inténtalo de nuevo.'] } };
+        console.error("Error creating question:", e);
+        // Handle database error
+        return; // Or throw an error
     }
+
+    revalidatePath('/admin/questions');
+    redirect('/admin/questions');
 }
 
-export async function updateQuestion(id: string, prevState: any, formData: FormData): Promise<FormState> {
+export async function updateQuestion(id: string, formData: FormData) {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        return { error: validation.error.flatten().fieldErrors };
+        console.error(validation.error.flatten().fieldErrors);
+        return;
     }
 
     try {
@@ -181,10 +185,13 @@ export async function updateQuestion(id: string, prevState: any, formData: FormD
             ...validation.data,
             updatedAt: Date.now(),
         });
-        return { error: null, success: true };
     } catch (e) {
-        return { error: { _general: ['Error al actualizar la pregunta. Inténtalo de nuevo.'] } };
+        console.error("Error updating question:", e);
+        return;
     }
+    revalidatePath('/admin/questions');
+    revalidatePath(`/admin/questions/${id}`);
+    redirect('/admin/questions');
 }
 
 export async function deleteQuestion(id: string) {
