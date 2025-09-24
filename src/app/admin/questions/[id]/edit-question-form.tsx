@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateQuestion, getQuestion } from '@/lib/actions';
+import { updateQuestion } from '@/lib/actions';
 import type { Question } from '@/lib/types';
 import { motion } from 'framer-motion';
-import { Skeleton } from '@/components/ui/skeleton';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -35,77 +34,13 @@ function ErrorMessage({ messages }: { messages?: string[] }) {
     );
 }
 
-function LoadingSkeleton() {
-    return (
-        <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-8 w-48" />
-                <div className="hidden items-center gap-2 md:ml-auto md:flex">
-                    <Skeleton className="h-9 w-24" />
-                    <Skeleton className="h-9 w-28" />
-                </div>
-            </div>
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-7 w-1/2" />
-                    <Skeleton className="h-5 w-1/3 mt-1" />
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-6">
-                        <div className="grid gap-3">
-                            <Skeleton className="h-5 w-24" />
-                            <Skeleton className="h-20 w-full" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-6">
-                           <div className="grid gap-3">
-                                <Skeleton className="h-5 w-40" />
-                                <Skeleton className="h-10 w-full" />
-                           </div>
-                           <div className="grid gap-3">
-                                <Skeleton className="h-5 w-32" />
-                                <Skeleton className="h-10 w-full" />
-                           </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-6">
-                           <div className="grid gap-3">
-                                <Skeleton className="h-5 w-36" />
-                                <Skeleton className="h-10 w-full" />
-                           </div>
-                           <div className="grid gap-3">
-                                <Skeleton className="h-5 w-36" />
-                                <Skeleton className="h-10 w-full" />
-                           </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-export function EditQuestionForm({ id }: { id: string }) {
+export function EditQuestionForm({ question }: { question: Question | null }) {
     const router = useRouter();
-    const [question, setQuestion] = useState<Question | null>(null);
-    const [loading, setLoading] = useState(true);
     
-    const updateQuestionWithId = updateQuestion.bind(null, id);
+    // The action needs the ID, which we get from the question prop.
+    // If there's no question, we shouldn't be here, but we can handle it gracefully.
+    const updateQuestionWithId = question ? updateQuestion.bind(null, question.id) : () => {};
     const [state, formAction] = useActionState(updateQuestionWithId, null);
-
-    useEffect(() => {
-        getQuestion(id)
-            .then(data => {
-                setQuestion(data);
-                setLoading(false);
-            })
-            .catch(() => {
-                setLoading(false);
-            });
-    }, [id]);
-
-
-    if (loading) {
-        return <LoadingSkeleton />;
-    }
 
     if (!question) {
         return (
@@ -115,8 +50,11 @@ export function EditQuestionForm({ id }: { id: string }) {
                         Pregunta no encontrada
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        La pregunta solicitada con ID "{id}" no existe.
+                        La pregunta solicitada no existe o no se pudo cargar.
                     </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => router.back()}>
+                        Volver
+                    </Button>
                 </div>
             </div>
         );

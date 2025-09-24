@@ -1,7 +1,11 @@
+import { getQuestion } from '@/lib/actions';
 import { EditQuestionForm } from './edit-question-form';
 
-// The page is now a simple component that passes the id to the client form.
-export default function EditQuestionPage({ params }: { params: { id: string } }) {
-    // We pass the ID to the client component, not the whole params object.
-    return <EditQuestionForm id={params.id} />;
+// The page is now an async Server Component.
+// It fetches the data on the server and passes it to the client form.
+export default async function EditQuestionPage({ params }: { params: { id: string } }) {
+    const question = await getQuestion(params.id);
+    
+    // We pass the entire question object to the client component.
+    return <EditQuestionForm question={question} />;
 }
