@@ -1,5 +1,6 @@
 'use client';
 
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createQuestion } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -20,12 +22,27 @@ function SubmitButton() {
 
 export default function NewQuestionPage() {
     const router = useRouter();
+    const { toast } = useToast();
+    const [state, formAction] = useActionState(createQuestion, null);
+
+    useEffect(() => {
+        if (state?.success) {
+            toast({ title: "Pregunta Creada", description: "La nueva pregunta se ha añadido correctamente."});
+            router.push('/admin/questions');
+        } else if (state?.error) {
+            toast({
+                variant: "destructive",
+                title: "Error al crear",
+                description: state.error,
+            });
+        }
+    }, [state, router, toast]);
 
     return (
-        <form action={createQuestion} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
+        <form action={formAction} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
-                    Nueva Pregunta
+                    Crear Pregunta
                 </h1>
                 <div className="hidden items-center gap-2 md:ml-auto md:flex">
                     <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
@@ -68,6 +85,12 @@ export default function NewQuestionPage() {
                     </div>
                 </CardContent>
             </Card>
+            <div className="flex items-center justify-center gap-2 md:hidden">
+                <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
+                    Descartar
+                </Button>
+                <SubmitButton />
+            </div>
         </form>
     )
 }

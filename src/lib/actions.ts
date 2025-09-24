@@ -140,13 +140,12 @@ const questionSchema = z.object({
     mediaNegUrl: z.string().url('Por favor, introduce una URL válida.'),
 });
 
-export async function createQuestion(formData: FormData) {
+export async function createQuestion(prevState: any, formData: FormData): Promise<{success?: boolean; error?: string}> {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        console.error("Validation failed", validation.error.flatten().fieldErrors);
-        // Returning will prevent redirect and keep form values
-        return;
+        const errorMessage = validation.error.errors.map(e => e.message).join(', ');
+        return { error: errorMessage };
     }
     
     const questionsCollection = collection(db, "questions");
@@ -160,23 +159,20 @@ export async function createQuestion(formData: FormData) {
             order: newOrder,
             updatedAt: Date.now(),
         });
+        revalidatePath('/admin/questions');
+        return { success: true };
     } catch (e) {
         console.error("Error creating question:", e);
-        // In a real app, you might want to return an error message
-        return;
+        return { error: 'No se pudo crear la pregunta en la base de datos.'};
     }
-
-    revalidatePath('/admin/questions');
-    redirect('/admin/questions');
 }
 
-export async function updateQuestion(id: string, formData: FormData) {
+export async function updateQuestion(id: string, prevState: any, formData: FormData): Promise<{success?: boolean; error?: string}> {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        console.error("Validation failed", validation.error.flatten().fieldErrors);
-        // Returning will prevent redirect and keep form values
-        return;
+        const errorMessage = validation.error.errors.map(e => e.message).join(', ');
+        return { error: errorMessage };
     }
 
     try {
@@ -184,15 +180,13 @@ export async function updateQuestion(id: string, formData: FormData) {
             ...validation.data,
             updatedAt: Date.now(),
         });
+        revalidatePath('/admin/questions');
+        revalidatePath(`/admin/questions/${id}`);
+        return { success: true };
     } catch (e) {
         console.error("Error updating question:", e);
-        // In a real app, you might want to return an error message
-        return;
+        return { error: 'No se pudo actualizar la pregunta en la base de datos.'};
     }
-
-    revalidatePath('/admin/questions');
-    revalidatePath(`/admin/questions/${id}`);
-    redirect('/admin/questions');
 }
 
 

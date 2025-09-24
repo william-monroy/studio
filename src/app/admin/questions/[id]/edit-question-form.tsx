@@ -1,5 +1,6 @@
 'use client';
 
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -9,22 +10,37 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateQuestion } from '@/lib/actions';
 import type { Question } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
       <Button size="sm" type="submit" disabled={pending}>
-        {pending ? 'Guardando...' : 'Guardar Pregunta'}
+        {pending ? 'Guardando...' : 'Guardar Cambios'}
       </Button>
     );
 }
 
 export function EditQuestionForm({ question }: { question: Question | null }) {
     const router = useRouter();
+    const { toast } = useToast();
     
-    // The action needs the ID, which we get from the question prop.
-    // If there's no question, we shouldn't be here, but we can handle it gracefully.
-    const updateQuestionWithId = question ? updateQuestion.bind(null, question.id) : () => {};
+    const updateQuestionWithId = question ? updateQuestion.bind(null, question.id) : async () => ({ error: 'ID de pregunta no encontrado.' });
+    const [state, formAction] = useActionState(updateQuestionWithId, null);
+
+
+    useEffect(() => {
+        if (state?.success) {
+            toast({ title: "Pregunta Actualizada", description: "Los cambios se han guardado correctamente."});
+            router.push('/admin/questions');
+        } else if (state?.error) {
+            toast({
+                variant: "destructive",
+                title: "Error al actualizar",
+                description: state.error,
+            });
+        }
+    }, [state, router, toast]);
 
     if (!question) {
         return (
@@ -45,7 +61,7 @@ export function EditQuestionForm({ question }: { question: Question | null }) {
     }
     
     return (
-        <form action={updateQuestionWithId} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
+        <form action={formAction} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
                     Editar Pregunta
@@ -91,6 +107,12 @@ export function EditQuestionForm({ question }: { question: Question | null }) {
                     </div>
                 </CardContent>
             </Card>
+             <div className="flex items-center justify-center gap-2 md:hidden">
+                <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
+                    Descartar
+                </Button>
+                <SubmitButton />
+            </div>
         </form>
     );
 }
