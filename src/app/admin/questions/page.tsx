@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -6,10 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import type { Question } from "@/lib/types";
 
-async function DeleteAction({ id }: { id: string }) {
+function DeleteAction({ id }: { id: string }) {
     return (
-      <form action={async () => { 'use server'; await deleteQuestion(id); }}>
+      <form action={async () => { await deleteQuestion(id); }}>
         <button type="submit" className="w-full text-left">
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
             <Trash2 className="mr-2 h-4 w-4" />
@@ -20,8 +24,12 @@ async function DeleteAction({ id }: { id: string }) {
     );
   }
 
-export default async function AdminQuestionsPage() {
-    const questions = await getQuestions();
+export default function AdminQuestionsPage() {
+    const [questions, setQuestions] = useState<Question[]>([]);
+
+    useEffect(() => {
+        getQuestions().then(setQuestions);
+    }, []);
 
     return (
         <>
