@@ -12,9 +12,9 @@ import {
 
 const navLinks = [
     { href: "/admin", label: "Dashboard", icon: Home },
-    { href: "/admin/questions", label: "Questions", icon: HelpCircle },
-    { href: "/admin/players", label: "Players", icon: Users },
-    { href: "/admin/analytics", label: "Analytics", icon: LineChart },
+    { href: "/admin/questions", label: "Preguntas", icon: HelpCircle },
+    { href: "/admin/players", label: "Jugadores", icon: Users },
+    { href: "/admin/analytics", label: "Analíticas", icon: LineChart },
 ];
 
 export default function AdminNav() {
