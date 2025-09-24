@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createQuestion } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { UrlImagePreview } from '@/components/admin/url-image-preview';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -72,15 +73,17 @@ export default function NewQuestionPage() {
                                 <Input id="timeLimitSec" name="timeLimitSec" type="number" step="1" min="5" placeholder="15" />
                             </div>
                         </div>
-                         <div className="grid grid-cols-2 gap-6">
-                            <div className="grid gap-3">
-                                <Label htmlFor="mediaPosUrl">URL de Media Positiva</Label>
-                                <Input id="mediaPosUrl" name="mediaPosUrl" placeholder="https://example.com/success.gif" />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="mediaNegUrl">URL de Media Negativa</Label>
-                                <Input id="mediaNegUrl" name="mediaNegUrl" placeholder="https://example.com/fail.gif" />
-                            </div>
+                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <UrlImagePreview
+                                name="mediaPosUrl"
+                                label="URL de Media Positiva"
+                                placeholder="https://example.com/success.gif"
+                            />
+                            <UrlImagePreview
+                                name="mediaNegUrl"
+                                label="URL de Media Negativa"
+                                placeholder="https://example.com/fail.gif"
+                            />
                         </div>
                     </div>
                 </CardContent>

@@ -8,53 +8,44 @@ import Link from 'next/link';
 
 const teamMembers = [
   {
+    name: "Armando Roman",
+    role: "Plastic Processing Sales Engineer",
+    avatar: "https://media.licdn.com/dms/image/v2/D4E03AQF90iyq9YsL1A/profile-displayphoto-crop_800_800/B4EZggFI2NGoAI-/0/1752884875729?e=1761782400&v=beta&t=0hmVtxVboRP6S1EVKhnswEQLyLESuVL3XGYCcxtUOOs",
+    linkedin: "https://www.linkedin.com/in/armandoromandl",
+    email: "armandoromandl@gmail.com"
+  },
+  {
+    name: "Clarisa Pluma",
+    role: "Biopharmaceutical Process Engineer",
+    avatar: "https://i.postimg.cc/3JHTNjR4/Whats-App-Image-2025-09-24-at-15-09-35.jpg",
+    github: "https://github.com",
+    linkedin: "https://linkedin.com",
+    email: "A00845660@tec.mx"
+  },
+  {
+    name: "Erika Rosado",
+    role: "Senior Electromechanical Design Engineer",
+    avatar: "https://media.licdn.com/dms/image/v2/C4E03AQFe-wrRSAe7VQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1547247872525?e=1761782400&v=beta&t=VhsQ2lXg0x5FR9rx8bVWip-Q0387LyCtonHjBFMpN9U",
+    github: "https://github.com",
+    linkedin: "https://www.linkedin.com/in/manuel-maldonado-094a21140/",
+    email: "erika.rosado.t@gmail.com"
+  },
+  {
+    name: "Manuel Maldonado",
+    role: "Maintenance Project Engineer",
+    avatar: "https://media.licdn.com/dms/image/v2/D5603AQGMObymgY9TOw/profile-displayphoto-shrink_800_800/B56ZUJ_f11HsAc-/0/1739629396421?e=1761782400&v=beta&t=-V5lBkfqf0qGe37uO-t-UMSUg17OBtf_1Tw0w7440VI",
+    github: "https://github.com",
+    linkedin: "https://www.linkedin.com/in/manuel-maldonado-094a21140/",
+    email: "manuel.malad@gmail.com"
+  },
+  {
     name: "William Monroy",
-    role: "Software Developer",
+    role: "Software Engineer",
     avatar: "https://github.com/william-monroy.png",
     github: "https://github.com/william-monroy",
     linkedin: "https://linkedin.com/in/william-monroy",
     email: "william@thebluebird.co"
   },
-  {
-    name: "Carlos Rodríguez",
-    role: "Backend Developer",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "carlos@decisionverse.com"
-  },
-  {
-    name: "María López",
-    role: "UI/UX Designer",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "maria@decisionverse.com"
-  },
-  {
-    name: "David Chen",
-    role: "Full Stack Developer",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "david@decisionverse.com"
-  },
-  {
-    name: "Sofia Martínez",
-    role: "Product Manager",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "sofia@decisionverse.com"
-  },
-  {
-    name: "Alex Johnson",
-    role: "DevOps Engineer",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    email: "alex@decisionverse.com"
-  }
 ];
 
 export default function CreditsPage() {
@@ -72,25 +63,27 @@ export default function CreditsPage() {
             Créditos
           </h1>
           <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto">
-            Conoce al increíble equipo detrás de DecisionVerse
+            Conoce al equipo detrás de DecisionVerse
           </p>
         </motion.div>
 
         {/* Team Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
-        >
-          {teamMembers.map((member, index) => (
-            <motion.div
-              key={member.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 * index }}
-            >
-              <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+        <div className="w-full mb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-6 w-full"
+          >
+            {teamMembers.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 * index }}
+                className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] xl:w-[300px]"
+              >
+                <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="p-6 text-center">
                   <div className="mb-4">
                     <img
@@ -105,13 +98,7 @@ export default function CreditsPage() {
                       {member.role}
                     </p>
                   </div>
-                  
                   <div className="flex justify-center space-x-3">
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href={member.github} target="_blank" rel="noopener noreferrer">
-                        <Github className="h-4 w-4" />
-                      </Link>
-                    </Button>
                     <Button size="sm" variant="outline" asChild>
                       <Link href={member.linkedin} target="_blank" rel="noopener noreferrer">
                         <Linkedin className="h-4 w-4" />
@@ -126,8 +113,9 @@ export default function CreditsPage() {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
-        </motion.div>
+            ))}
+          </motion.div>
+        </div>
 
         {/* Footer */}
         <motion.div

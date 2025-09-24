@@ -127,7 +127,7 @@ export default function GameClient() {
         } else {
           nextQuestion();
         }
-      }, 4000); // Increased outcome view time to 4 seconds
+      }, 10000); 
     },
     [status, nickname, currentQuestion, answerQuestion, showOutcome, nextQuestion, finishGame, router, currentQuestionIndex, questions.length]
   );

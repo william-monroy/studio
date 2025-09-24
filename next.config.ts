@@ -33,6 +33,28 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // https://media1.tenor.com
+      {
+        protocol: 'https',
+        hostname: 'media1.tenor.com',
+        port: '',
+        pathname: '/**',
+      },
+      // https://i.pinimg.com
+      {
+        protocol: 'https',
+        hostname: 'i.pinimg.com',
+        port: '',
+        pathname: '/**',
+      },
+      // https://media.beehiiv.com/cdn-cgi/image
+      {
+        protocol: 'https',
+        hostname: 'media.beehiiv.com',
+        port: '',
+        pathname: '/cdn-cgi/image/**',
+      }
+
     ],
   },
 };
