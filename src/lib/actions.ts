@@ -45,7 +45,7 @@ export async function evaluateAnswer(
   decision: 'YES' | 'NO',
   nickname: string
 ) {
-  const randomValue = Math.random();
+  const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff;
   const outcome = randomValue < question.successProb ? 'SUCCESS' : 'FAIL';
   
   const feedbackResult = await evaluateAnswerFeedback({
