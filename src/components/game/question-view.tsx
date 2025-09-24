@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useCountdown, useKeyPress } from 'usehooks-ts';
+import { useCountdown, useEventListener } from 'usehooks-ts';
 import type { Question } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,8 +40,16 @@ export function QuestionView({
     onAnswer(decision, timeTaken);
   };
   
-  useKeyPress(['y', 'Y'], () => handleDecision('YES'));
-  useKeyPress(['n', 'N'], () => handleDecision('NO'));
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key.toLowerCase() === 'y') {
+      handleDecision('YES');
+    } else if (event.key.toLowerCase() === 'n') {
+      handleDecision('NO');
+    }
+  };
+
+  useEventListener('keydown', handleKeyPress);
+
 
   useEffect(() => {
     if (count === 0) {
