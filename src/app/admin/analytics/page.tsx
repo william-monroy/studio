@@ -2,10 +2,9 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Pie, PieChart, Cell } from 'recharts';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { getAnalyticsData } from '@/lib/actions';
-import { useEffect, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Gamepad, Trophy, Percent } from 'lucide-react';
+import type { getAnalyticsData } from '@/lib/actions';
 
 type AnalyticsData = Awaited<ReturnType<typeof getAnalyticsData>>;
 
@@ -112,6 +111,10 @@ function AnalyticsClient({ initialData }: { initialData: AnalyticsData }) {
     );
 }
 
+// Server Component Page
+import { getAnalyticsData as getAnalyticsDataAction } from '@/lib/actions';
+import { Suspense } from 'react';
+
 function LoadingSkeleton() {
     return (
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
@@ -125,16 +128,15 @@ function LoadingSkeleton() {
     )
 }
 
-export default function AnalyticsPage() {
-    const [data, setData] = useState<AnalyticsData | null>(null);
-
-    useEffect(() => {
-        getAnalyticsData().then(setData);
-    }, []);
-
-    if (!data) {
-        return <LoadingSkeleton />;
-    }
-
+async function AnalyticsData() {
+    const data = await getAnalyticsDataAction();
     return <AnalyticsClient initialData={data} />;
+}
+
+export default function AnalyticsPage() {
+    return (
+        <Suspense fallback={<LoadingSkeleton />}>
+            <AnalyticsData />
+        </Suspense>
+    );
 }

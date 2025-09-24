@@ -3,34 +3,31 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { getQuestions, deleteQuestion } from "@/lib/actions";
+import { deleteQuestion } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
 import type { Question } from "@/lib/types";
 
 function DeleteAction({ id }: { id: string }) {
+    const handleDelete = async () => {
+      // We wrap the server action call in a function to handle potential errors
+      // and to refresh the page to reflect the deletion.
+      // This is a simple way to re-fetch data on the client.
+      await deleteQuestion(id);
+      window.location.reload();
+    };
+
     return (
-      <form action={async () => { await deleteQuestion(id); }}>
-        <button type="submit" className="w-full text-left">
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleDelete} className="text-destructive">
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
-          </DropdownMenuItem>
-        </button>
-      </form>
+        </DropdownMenuItem>
     );
-  }
+}
 
-export default function AdminQuestionsPage() {
-    const [questions, setQuestions] = useState<Question[]>([]);
-
-    useEffect(() => {
-        getQuestions().then(setQuestions);
-    }, []);
-
+function AdminQuestionsClient({ questions }: { questions: Question[] }) {
     return (
         <>
             <div className="flex items-center">
@@ -94,10 +91,24 @@ export default function AdminQuestionsPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
+                            {questions.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24">No questions found.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
             </Card>
         </>
-    )
+    );
+}
+
+
+// Server Component Page
+import { getQuestions } from "@/lib/actions";
+
+export default async function AdminQuestionsPage() {
+    const questions = await getQuestions();
+    return <AdminQuestionsClient questions={questions} />;
 }

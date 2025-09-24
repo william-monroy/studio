@@ -97,12 +97,12 @@ export async function saveScore(scoreData: {nickname: string, score: number, tot
           console.log(`High score updated for ${nickname}`);
         } else {
           console.log(`Score for ${nickname} is not a high score. Not updating.`);
-          // This return is crucial to finish the transaction successfully.
-          return; 
         }
       }
     });
 
+    revalidatePath('/results');
+    revalidatePath('/admin/players');
     return { success: true };
   } catch (error) {
     console.error("Failed to save score transaction", error);
@@ -158,11 +158,11 @@ export async function createQuestion(prevState: any, formData: FormData) {
             order: newOrder,
             updatedAt: Date.now(),
         });
-        revalidatePath('/admin/questions');
-        redirect('/admin/questions');
     } catch (e) {
         return { error: { _general: 'Error al crear la pregunta. Inténtalo de nuevo.' } };
     }
+    revalidatePath('/admin/questions');
+    redirect('/admin/questions');
 }
 
 export async function updateQuestion(id: string, prevState: any, formData: FormData) {
@@ -177,12 +177,12 @@ export async function updateQuestion(id: string, prevState: any, formData: FormD
             ...validation.data,
             updatedAt: Date.now(),
         });
-        revalidatePath('/admin/questions');
-        revalidatePath(`/admin/questions/${id}`);
-        redirect('/admin/questions');
     } catch (e) {
         return { error: { _general: 'Error al actualizar la pregunta. Inténtalo de nuevo.' } };
     }
+    revalidatePath('/admin/questions');
+    revalidatePath(`/admin/questions/${id}`);
+    redirect('/admin/questions');
 }
 
 export async function deleteQuestion(id: string) {
@@ -190,10 +190,10 @@ export async function deleteQuestion(id: string) {
         await deleteDoc(doc(db, 'questions', id));
         revalidatePath('/admin/questions');
     } catch (e) {
-        // In a real app, you'd want better error handling, maybe a toast notification.
         console.error("Failed to delete question", e);
+        // We throw an error to be caught by the client if needed
+        throw new Error('Failed to delete question.');
     }
-    redirect('/admin/questions');
 }
 
 export async function getAnalyticsData() {
