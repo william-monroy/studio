@@ -141,13 +141,13 @@ const questionSchema = z.object({
 });
 
 
-export async function createQuestion(formData: FormData) {
+export async function createQuestion(prevState: any, formData: FormData) {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        console.error(validation.error.flatten().fieldErrors);
-        // This is a simple way to return errors, a real app might handle this differently
-        return;
+        return {
+            errors: validation.error.flatten().fieldErrors,
+        }
     }
     
     const questionsCollection = collection(db, "questions");
@@ -163,20 +163,22 @@ export async function createQuestion(formData: FormData) {
         });
     } catch (e) {
         console.error("Error creating question:", e);
-        // Handle database error
-        return;
+        return {
+            errors: { _form: ['Error al crear la pregunta en la base de datos.'] }
+        }
     }
 
     revalidatePath('/admin/questions');
     redirect('/admin/questions');
 }
 
-export async function updateQuestion(id: string, formData: FormData) {
+export async function updateQuestion(id: string, prevState: any, formData: FormData) {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
-        console.error(validation.error.flatten().fieldErrors);
-        return;
+        return {
+            errors: validation.error.flatten().fieldErrors,
+        }
     }
 
     try {
@@ -186,7 +188,9 @@ export async function updateQuestion(id: string, formData: FormData) {
         });
     } catch (e) {
         console.error("Error updating question:", e);
-        return;
+        return {
+            errors: { _form: ['Error al actualizar la pregunta en la base de datos.'] }
+        }
     }
     revalidatePath('/admin/questions');
     revalidatePath(`/admin/questions/${id}`);
