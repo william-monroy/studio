@@ -1,4 +1,4 @@
-'use client';
+'use server';
 
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateQuestion, getQuestion } from '@/lib/actions';
 import type { Question } from '@/lib/types';
 import { motion } from 'framer-motion';
+
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -34,7 +35,9 @@ function ErrorMessage({ messages }: { messages?: string[] }) {
     );
 }
 
+// Client Component for the form
 function EditQuestionForm({ question }: { question: Question }) {
+    'use client';
     const [state, formAction] = useActionState(updateQuestion.bind(null, question.id), { error: null });
     const router = useRouter();
 
@@ -95,7 +98,7 @@ function EditQuestionForm({ question }: { question: Question }) {
     );
 }
 
-
+// Server Component Page
 export default async function EditQuestionPage({ params }: { params: { id: string } }) {
     const question = await getQuestion(params.id);
 
