@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,12 @@ function ErrorMessage({ messages }: { messages?: string[] }) {
 export default function NewQuestionPage() {
     const [state, formAction] = useActionState(createQuestion, { error: null });
     const router = useRouter();
+
+    useEffect(() => {
+        if (state?.success) {
+            router.push('/admin/questions');
+        }
+    }, [state, router]);
 
     return (
         <form action={formAction} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">

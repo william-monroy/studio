@@ -140,7 +140,12 @@ const questionSchema = z.object({
     mediaNegUrl: z.string().url('Por favor, introduce una URL válida.'),
 });
 
-export async function createQuestion(prevState: any, formData: FormData) {
+type FormState = {
+  error: Record<string, string[]> | null;
+  success?: boolean;
+}
+
+export async function createQuestion(prevState: FormState, formData: FormData): Promise<FormState> {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
@@ -158,11 +163,11 @@ export async function createQuestion(prevState: any, formData: FormData) {
             order: newOrder,
             updatedAt: Date.now(),
         });
+        revalidatePath('/admin/questions');
+        return { error: null, success: true };
     } catch (e) {
-        return { error: { _general: 'Error al crear la pregunta. Inténtalo de nuevo.' } };
+        return { error: { _general: ['Error al crear la pregunta. Inténtalo de nuevo.'] } };
     }
-    revalidatePath('/admin/questions');
-    redirect('/admin/questions');
 }
 
 export async function updateQuestion(id: string, prevState: any, formData: FormData) {
