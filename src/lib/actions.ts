@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { evaluateAnswerFeedback } from '@/ai/flows/evaluate-answer-feedback';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { GameAnswer, GameSession, ScoreEntry, Question } from './types';
 
@@ -37,9 +37,12 @@ export async function startGame(prevState: any, formData: FormData) {
     currentQuestionIndex: 0,
   };
 
-  const docRef = await addDoc(collection(db, 'sessions'), newSession);
-
-  redirect(`/play?sessionId=${docRef.id}`);
+  try {
+    const docRef = await addDoc(collection(db, 'sessions'), newSession);
+    redirect(`/play?sessionId=${docRef.id}`);
+  } catch (error) {
+    return { error: 'No se pudo iniciar el juego. Inténtalo de nuevo.' };
+  }
 }
 
 export async function evaluateAnswer(sessionId: string, questionId: string, decision: 'YES' | 'NO', timeTakenMs: number) {
@@ -59,7 +62,7 @@ export async function evaluateAnswer(sessionId: string, questionId: string, deci
   const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff;
   const outcome = randomValue < question.successProb ? 'SUCCESS' : 'FAIL';
   
-  const feedback = await evaluateAnswerFeedback({
+  const feedbackResult = await evaluateAnswerFeedback({
     questionText: question.text,
     decision,
     outcome,
@@ -79,24 +82,29 @@ export async function evaluateAnswer(sessionId: string, questionId: string, deci
   const updatedIndex = session.currentQuestionIndex + 1;
 
   const isFinished = updatedIndex >= session.questions.length;
-
-  await updateDoc(sessionDoc, {
+  
+  const updatedData: Partial<GameSession> = {
     answers: updatedAnswers,
     totalTimeMs: updatedTime,
     score: updatedScore,
     currentQuestionIndex: updatedIndex,
-    ...(isFinished && { endedAt: Date.now() })
-  });
+  };
+
+  if (isFinished) {
+    updatedData.endedAt = Date.now();
+  }
+
+  await updateDoc(sessionDoc, updatedData);
 
   const mediaUrl = outcome === 'SUCCESS' ? question.mediaPosUrl : question.mediaNegUrl;
   
   if(isFinished) {
-    await finishGame(sessionId, session);
+    await finishGame(sessionId, {...session, ...updatedData } as GameSession);
   }
 
   return {
     outcome,
-    feedback: feedback.feedback,
+    feedback: feedbackResult.feedback,
     mediaUrl,
     isFinished,
   };
@@ -127,15 +135,28 @@ export async function getLeaderboard(): Promise<ScoreEntry[]> {
     const leaderboardQuery = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), orderBy('totalTimeMs', 'asc'), orderBy('createdAt', 'desc'), limit(50));
     const snapshot = await getDocs(leaderboardQuery);
     
-    const scores: ScoreEntry[] = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
+    let scores: ScoreEntry[] = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
 
     // If leaderboard is empty, populate with mock data for demonstration
-    if (scores.length === 0) {
+    if (scores.length === 0 && mockLeaderboard.length > 0) {
         for (const entry of mockLeaderboard) {
-            await addDoc(collection(db, 'leaderboard'), { ...entry, sessionId: entry.id });
+            // Use a consistent but unique ID for mock entries to avoid duplicates on reload
+            const mockSessionId = `mock-${entry.nickname.replace(/\s+/g, '-')}`;
+            const newEntry: Omit<ScoreEntry, 'id'> = {
+                sessionId: mockSessionId,
+                nickname: entry.nickname,
+                score: entry.score,
+                totalTimeMs: entry.totalTimeMs,
+                createdAt: entry.createdAt,
+            };
+            const docRef = await addDoc(collection(db, 'leaderboard'), newEntry);
+            scores.push({ id: docRef.id, ...newEntry });
         }
-        const newSnapshot = await getDocs(leaderboardQuery);
-        return newSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
+        // Re-sort after adding
+        scores.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.totalTimeMs - b.totalTimeMs;
+        });
     }
     
     return scores;
@@ -155,11 +176,11 @@ export async function getQuestion(id: string): Promise<Question | null> {
 }
 
 const questionSchema = z.object({
-    text: z.string().min(10, 'Question text must be at least 10 characters long.'),
+    text: z.string().min(10, 'El texto de la pregunta debe tener al menos 10 caracteres.'),
     successProb: z.coerce.number().min(0).max(1),
     timeLimitSec: z.coerce.number().int().min(5),
-    mediaPosUrl: z.string().url('Please enter a valid URL.'),
-    mediaNegUrl: z.string().url('Please enter a valid URL.'),
+    mediaPosUrl: z.string().url('Por favor, introduce una URL válida.'),
+    mediaNegUrl: z.string().url('Por favor, introduce una URL válida.'),
 });
 
 export async function createQuestion(prevState: any, formData: FormData) {
@@ -182,7 +203,7 @@ export async function createQuestion(prevState: any, formData: FormData) {
         });
         redirect('/admin/questions');
     } catch (e) {
-        return { error: { _general: 'Failed to create question. Please try again.' } };
+        return { error: { _general: 'Error al crear la pregunta. Inténtalo de nuevo.' } };
     }
 }
 
@@ -200,19 +221,16 @@ export async function updateQuestion(id: string, prevState: any, formData: FormD
         });
         redirect('/admin/questions');
     } catch (e) {
-        return { error: { _general: 'Failed to update question. Please try again.' } };
+        return { error: { _general: 'Error al actualizar la pregunta. Inténtalo de nuevo.' } };
     }
 }
 
 export async function deleteQuestion(id: string) {
     try {
-        await updateDoc(doc(db, 'questions', id), {
-            active: false,
-            updatedAt: Date.now(),
-        });
-        redirect('/admin/questions');
+        await deleteDoc(doc(db, 'questions', id));
     } catch (e) {
-        // Handle error, maybe show a toast
+        // In a real app, you'd want better error handling, maybe a toast notification.
         console.error("Failed to delete question", e);
     }
+    redirect('/admin/questions');
 }
