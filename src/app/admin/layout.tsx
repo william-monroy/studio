@@ -21,10 +21,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Package2 className="h-6 w-6 text-primary" />
               <span className="font-headline">DecisionVerse</span>
             </Link>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
           </div>
           <div className="flex-1">
             <AdminNav />
