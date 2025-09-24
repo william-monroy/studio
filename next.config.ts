@@ -53,8 +53,14 @@ const nextConfig: NextConfig = {
         hostname: 'media.beehiiv.com',
         port: '',
         pathname: '/cdn-cgi/image/**',
+      },
+      // https://media.licdn.com/dms/image/
+      {
+        protocol: 'https',
+        hostname: 'media.licdn.com',
+        port: '',
+        pathname: '/dms/image/**',
       }
-
     ],
   },
 };
