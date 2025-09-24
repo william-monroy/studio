@@ -73,8 +73,9 @@ export async function saveScore(scoreData: {nickname: string, score: number, tot
   };
 
   try {
+    // We don't need to revalidate with real-time updates
     await addDoc(collection(db, 'leaderboard'), newScore);
-    revalidatePath('/results');
+    console.log("Score saved successfully for", scoreData.nickname);
     return { success: true };
   } catch (error) {
     console.error("Failed to save score", error);

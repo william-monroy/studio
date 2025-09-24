@@ -1,16 +1,18 @@
 'use client';
 
-import { getLeaderboard, saveScore } from '@/lib/actions';
+import { saveScore } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { ResultsDisplay } from '@/components/game/results-display';
 import { LeaderboardTable } from '@/components/game/leaderboard-table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Gamepad, Home } from 'lucide-react';
-import { ScoreEntry } from '@/lib/types';
-import { useEffect, useState } from 'react';
+import type { ScoreEntry } from '@/lib/types';
+import { useEffect, useState, use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGameStore } from '@/store/game-store';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function LoadingSkeleton() {
   return (
@@ -42,18 +44,29 @@ export default function ResultsPage() {
       return;
     }
 
-    async function fetchData() {
-      try {
-        await saveScore({ nickname, score, totalTimeMs });
-        const leaderboardData = await getLeaderboard();
-        setLeaderboard(leaderboardData);
-      } catch (error) {
-        console.error("Failed to fetch results data", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
+    // Save score once when the page loads
+    saveScore({ nickname, score, totalTimeMs })
+      .catch(error => console.error("Failed to save score", error))
+      .finally(() => setLoading(false));
+
+    // Set up real-time listener for the leaderboard
+    const leaderboardQuery = query(
+        collection(db, 'leaderboard'),
+        orderBy('score', 'desc'),
+        orderBy('totalTimeMs', 'asc'),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+    );
+
+    const unsubscribe = onSnapshot(leaderboardQuery, (snapshot) => {
+        const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ScoreEntry);
+        setLeaderboard(scores);
+    }, (error) => {
+        console.error("Error fetching real-time leaderboard:", error);
+    });
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
   }, [status, router, nickname, score, totalTimeMs]);
 
   const handlePlayAgain = () => {
@@ -80,12 +93,17 @@ export default function ResultsPage() {
     <div className="container mx-auto max-w-4xl py-12 px-4 min-h-screen">
       <ResultsDisplay session={session} />
       
-      {leaderboard && (
+      {leaderboard ? (
         <div className="my-12">
           <h2 className="text-4xl font-headline font-bold text-center text-primary mb-6">
             Tabla de Líderes
           </h2>
           <LeaderboardTable scores={leaderboard} />
+        </div>
+      ) : (
+         <div className="my-12 flex flex-col items-center">
+            <Skeleton className="h-12 w-1/2 mx-auto mb-6" />
+            <Skeleton className="h-80 w-full" />
         </div>
       )}
 

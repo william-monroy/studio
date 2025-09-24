@@ -11,6 +11,8 @@ import { OutcomeView } from './outcome-view';
 import Confetti from '../confetti';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Progress } from '@/components/ui/progress';
+
 
 type Outcome = {
   outcome: 'SUCCESS' | 'FAIL';
@@ -120,6 +122,11 @@ export default function GameClient() {
     [status, nickname, currentQuestion, answerQuestion, showOutcome, nextQuestion, finishGame, router, currentQuestionIndex, questions.length]
   );
   
+  const progressValue = useMemo(() => {
+    if (!questions.length) return 0;
+    return ((currentQuestionIndex + 1) / questions.length) * 100;
+  }, [currentQuestionIndex, questions.length]);
+
   if (status === 'pending' || !currentQuestion) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-background">
@@ -141,6 +148,7 @@ export default function GameClient() {
 
   return (
     <div className="w-full min-h-screen bg-background flex items-center justify-center p-4 overflow-hidden">
+      <Progress value={progressValue} className="fixed top-0 left-0 right-0 h-2 w-full rounded-none z-50" />
       {showConfetti && <Confetti />}
       <AnimatePresence mode="wait">
         {status === 'playing' && (
