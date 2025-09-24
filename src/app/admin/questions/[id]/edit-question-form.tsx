@@ -1,6 +1,5 @@
 'use client';
 
-import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateQuestion } from '@/lib/actions';
 import type { Question } from '@/lib/types';
-import { motion } from 'framer-motion';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -21,26 +19,12 @@ function SubmitButton() {
     );
 }
 
-function ErrorMessage({ messages }: { messages?: string[] }) {
-    if (!messages || messages.length === 0) return null;
-    return (
-        <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-1 text-sm font-medium text-destructive"
-        >
-            {messages.join(', ')}
-        </motion.p>
-    );
-}
-
 export function EditQuestionForm({ question }: { question: Question | null }) {
     const router = useRouter();
     
     // The action needs the ID, which we get from the question prop.
     // If there's no question, we shouldn't be here, but we can handle it gracefully.
     const updateQuestionWithId = question ? updateQuestion.bind(null, question.id) : () => {};
-    const [state, formAction] = useActionState(updateQuestionWithId, null);
 
     if (!question) {
         return (
@@ -61,7 +45,7 @@ export function EditQuestionForm({ question }: { question: Question | null }) {
     }
     
     return (
-        <form action={formAction} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
+        <form action={updateQuestionWithId} className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
                     Editar Pregunta
@@ -83,33 +67,27 @@ export function EditQuestionForm({ question }: { question: Question | null }) {
                         <div className="grid gap-3">
                             <Label htmlFor="text">Texto de la Pregunta</Label>
                             <Textarea id="text" name="text" placeholder="e.g. ¿Invertir en propiedades en el metaverso?" defaultValue={question.text} />
-                             <ErrorMessage messages={state?.errors?.text} />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <div className="grid gap-3">
                                 <Label htmlFor="successProb">Probabilidad de Éxito (0.0 a 1.0)</Label>
                                 <Input id="successProb" name="successProb" type="number" step="0.1" min="0" max="1" placeholder="0.5" defaultValue={question.successProb} />
-                                <ErrorMessage messages={state?.errors?.successProb} />
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="timeLimitSec">Límite de Tiempo (segundos)</Label>
                                 <Input id="timeLimitSec" name="timeLimitSec" type="number" step="1" min="5" placeholder="15" defaultValue={question.timeLimitSec} />
-                                <ErrorMessage messages={state?.errors?.timeLimitSec} />
                             </div>
                         </div>
                          <div className="grid grid-cols-2 gap-6">
                             <div className="grid gap-3">
                                 <Label htmlFor="mediaPosUrl">URL de Media Positiva</Label>
                                 <Input id="mediaPosUrl" name="mediaPosUrl" placeholder="https://example.com/success.gif" defaultValue={question.mediaPosUrl} />
-                                <ErrorMessage messages={state?.errors?.mediaPosUrl} />
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="mediaNegUrl">URL de Media Negativa</Label>
                                 <Input id="mediaNegUrl" name="mediaNegUrl" placeholder="https://example.com/fail.gif" defaultValue={question.mediaNegUrl} />
-                                <ErrorMessage messages={state?.errors?.mediaNegUrl} />
                             </div>
                         </div>
-                        <ErrorMessage messages={state?.errors?._form} />
                     </div>
                 </CardContent>
             </Card>
