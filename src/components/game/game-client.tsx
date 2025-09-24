@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/game-store';
 import type { GameAnswer } from '@/lib/types';
@@ -18,6 +18,37 @@ type Outcome = {
   mediaUrl: string;
 };
 
+function ImagePreloader({ imageUrls, onLoaded }: { imageUrls: string[], onLoaded: () => void }) {
+  useEffect(() => {
+    let loadedCount = 0;
+    if (imageUrls.length === 0) {
+      onLoaded();
+      return;
+    }
+
+    imageUrls.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === imageUrls.length) {
+          onLoaded();
+        }
+      };
+      img.onerror = () => {
+        // Even if an image fails, we count it as "loaded" to not block the game
+        loadedCount++;
+        if (loadedCount === imageUrls.length) {
+          onLoaded();
+        }
+      }
+    });
+  }, [imageUrls, onLoaded]);
+
+  return null; // This component doesn't render anything
+}
+
+
 export default function GameClient() {
   const router = useRouter();
 
@@ -34,6 +65,7 @@ export default function GameClient() {
 
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   useEffect(() => {
     // Redirect to home if game is not in a playable state
@@ -43,6 +75,10 @@ export default function GameClient() {
   }, [status, questions, router]);
 
   const currentQuestion = questions?.[currentQuestionIndex];
+  
+  const imageUrlsToPreload = useMemo(() => 
+    questions.flatMap(q => [q.mediaPosUrl, q.mediaNegUrl]),
+  [questions]);
 
   const handleAnswer = useCallback(
     async (decision: 'YES' | 'NO', timeTakenMs: number) => {
@@ -79,7 +115,7 @@ export default function GameClient() {
         } else {
           nextQuestion();
         }
-      }, 2500); // Show outcome for 2.5 seconds
+      }, 4000); // Increased outcome view time to 4 seconds
     },
     [status, nickname, currentQuestion, answerQuestion, showOutcome, nextQuestion, finishGame, router, currentQuestionIndex, questions.length]
   );
@@ -89,6 +125,16 @@ export default function GameClient() {
       <div className="w-full h-screen flex flex-col items-center justify-center bg-background">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
         <p className="mt-4 font-headline text-xl">Sincronizando el universo...</p>
+      </div>
+    );
+  }
+
+  if (!imagesLoaded) {
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-background">
+        <ImagePreloader imageUrls={imageUrlsToPreload} onLoaded={() => setImagesLoaded(true)} />
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <p className="mt-4 font-headline text-xl">Optimizando recursos...</p>
       </div>
     );
   }
