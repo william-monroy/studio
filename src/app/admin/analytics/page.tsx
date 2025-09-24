@@ -24,7 +24,7 @@ async function AnalyticsData() {
     return <AnalyticsClient initialData={data} />;
 }
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
     return (
         <Suspense fallback={<LoadingSkeleton />}>
             <AnalyticsData />
