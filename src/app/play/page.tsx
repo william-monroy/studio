@@ -1,7 +1,5 @@
 import { Suspense } from "react";
 import GameClient from "@/components/game/game-client";
-import { getGameSession } from "@/lib/actions";
-import { redirect } from 'next/navigation';
 
 function GameLoading() {
     return (
@@ -11,22 +9,10 @@ function GameLoading() {
     )
 }
 
-export default async function PlayPage({ searchParams }: { searchParams: { sessionId: string } }) {
-    const sessionId = searchParams.sessionId;
-    if (!sessionId) {
-        redirect('/');
-    }
-
-    const session = await getGameSession(sessionId);
-
-    if (!session) {
-        // This might happen if the session ID is invalid or not found in the DB.
-        redirect('/');
-    }
-    
+export default async function PlayPage() {
     return (
         <Suspense fallback={<GameLoading />}>
-            <GameClient session={session} />
+            <GameClient />
         </Suspense>
     );
 }

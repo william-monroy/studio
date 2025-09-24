@@ -10,7 +10,7 @@ import { revalidatePath } from 'next/cache';
 
 const nicknameSchema = z.string().min(2, "El nickname debe tener al menos 2 caracteres.").max(16, "El nickname no puede tener más de 16 caracteres.");
 
-export async function startGame(prevState: any, formData: FormData): Promise<{success: boolean; sessionId?: string; error?: string;}> {
+export async function startGame(prevState: any, formData: FormData): Promise<{success: boolean; questions?: Question[]; error?: string;}> {
   console.log("Attempting to start game...");
   const nickname = formData.get('nickname');
   const validation = nicknameSchema.safeParse(nickname);
@@ -32,19 +32,7 @@ export async function startGame(prevState: any, formData: FormData): Promise<{su
 
     console.log(`Found ${questions.length} active questions.`);
 
-    const newSession: Omit<GameSession, 'id'> = {
-      nickname: validation.data,
-      startedAt: Date.now(),
-      answers: [],
-      score: 0,
-      totalTimeMs: 0,
-      questions: questions,
-      currentQuestionIndex: 0,
-    };
-
-    const docRef = await addDoc(collection(db, 'sessions'), newSession);
-    console.log("Game session created successfully with ID:", docRef.id);
-    return { success: true, sessionId: docRef.id };
+    return { success: true, questions };
 
   } catch (error: any) {
     console.error('Failed to start game session:', error);
@@ -52,20 +40,11 @@ export async function startGame(prevState: any, formData: FormData): Promise<{su
   }
 }
 
-export async function evaluateAnswer(sessionId: string, questionId: string, decision: 'YES' | 'NO', timeTakenMs: number) {
-  const sessionDoc = doc(db, 'sessions', sessionId);
-  const sessionSnapshot = await getDoc(sessionDoc);
-  const questionDoc = doc(db, 'questions', questionId);
-  const questionSnapshot = await getDoc(questionDoc);
-
-
-  if (!sessionSnapshot.exists() || !questionSnapshot.exists()) {
-    throw new Error('Invalid session or question ID');
-  }
-
-  const session = sessionSnapshot.data() as GameSession;
-  const question = { id: questionSnapshot.id, ...questionSnapshot.data() } as Question;
-
+export async function evaluateAnswer(
+  question: Question,
+  decision: 'YES' | 'NO',
+  nickname: string
+) {
   const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff;
   const outcome = randomValue < question.successProb ? 'SUCCESS' : 'FAIL';
   
@@ -73,69 +52,34 @@ export async function evaluateAnswer(sessionId: string, questionId: string, deci
     questionText: question.text,
     decision,
     outcome,
-    nickname: session.nickname,
+    nickname: nickname,
   });
-
-  const answer: GameAnswer = {
-    questionId,
-    decision,
-    outcome,
-    timeMs: timeTakenMs,
-  };
-
-  const updatedAnswers = [...session.answers, answer];
-  const updatedTime = session.totalTimeMs + timeTakenMs;
-  const updatedScore = outcome === 'SUCCESS' ? session.score + 1 : session.score;
-  const updatedIndex = session.currentQuestionIndex + 1;
-
-  const isFinished = updatedIndex >= session.questions.length;
-  
-  const updatedData: Partial<GameSession> = {
-    answers: updatedAnswers,
-    totalTimeMs: updatedTime,
-    score: updatedScore,
-    currentQuestionIndex: updatedIndex,
-  };
-
-  if (isFinished) {
-    updatedData.endedAt = Date.now();
-  }
-
-  await updateDoc(sessionDoc, updatedData);
 
   const mediaUrl = outcome === 'SUCCESS' ? question.mediaPosUrl : question.mediaNegUrl;
   
-  if(isFinished) {
-    await finishGame(sessionId, {...session, ...updatedData } as GameSession);
-  }
-
   return {
     outcome,
     feedback: feedbackResult.feedback,
     mediaUrl,
-    isFinished,
   };
 }
 
-export async function finishGame(sessionId: string, sessionData: GameSession) {
-    const newScore: Omit<ScoreEntry, 'id'> = {
-        sessionId: sessionId,
-        nickname: sessionData.nickname,
-        score: sessionData.score,
-        totalTimeMs: sessionData.totalTimeMs,
-        createdAt: sessionData.endedAt || Date.now(),
-    };
+export async function saveScore(scoreData: {nickname: string, score: number, totalTimeMs: number}) {
+  const newScore: Omit<ScoreEntry, 'id'> = {
+    nickname: scoreData.nickname,
+    score: scoreData.score,
+    totalTimeMs: scoreData.totalTimeMs,
+    createdAt: Date.now(),
+  };
 
+  try {
     await addDoc(collection(db, 'leaderboard'), newScore);
-}
-
-
-export async function getGameSession(sessionId: string): Promise<GameSession | null> {
-    const sessionDoc = await getDoc(doc(db, 'sessions', sessionId));
-    if (!sessionDoc.exists()) {
-        return null;
-    }
-    return { id: sessionDoc.id, ...sessionDoc.data() } as GameSession;
+    revalidatePath('/results');
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to save score", error);
+    return { success: false, error: 'Could not save score to leaderboard.'};
+  }
 }
 
 export async function getLeaderboard(): Promise<ScoreEntry[]> {

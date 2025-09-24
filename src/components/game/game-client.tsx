@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/game-store';
-import { useGameSession } from '@/hooks/use-game-session';
-import type { GameSession, Question } from '@/lib/types';
+import type { GameAnswer } from '@/lib/types';
 import { evaluateAnswer } from '@/lib/actions';
 
 import { QuestionView } from './question-view';
@@ -19,12 +18,11 @@ type Outcome = {
   mediaUrl: string;
 };
 
-export default function GameClient({ session }: { session: GameSession }) {
-  useGameSession();
+export default function GameClient() {
   const router = useRouter();
 
   const {
-    sessionId,
+    nickname,
     questions,
     currentQuestionIndex,
     status,
@@ -32,27 +30,33 @@ export default function GameClient({ session }: { session: GameSession }) {
     showOutcome,
     nextQuestion,
     finishGame,
-    startGame: startGameInStore,
   } = useGameStore();
 
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
-    // Hydrate store with server-side session data if it's missing
-    if (session && !sessionId) {
-      startGameInStore(session.id, session.questions);
+    // Redirect to home if game is not in a playable state
+    if (status === 'pending' || questions.length === 0) {
+      router.replace('/');
     }
-  }, [session, sessionId, startGameInStore]);
+  }, [status, questions, router]);
 
   const currentQuestion = questions?.[currentQuestionIndex];
 
   const handleAnswer = useCallback(
     async (decision: 'YES' | 'NO', timeTakenMs: number) => {
-      if (status !== 'playing' || !sessionId || !currentQuestion) return;
+      if (status !== 'playing' || !nickname || !currentQuestion) return;
 
-      answerQuestion();
-      const result = await evaluateAnswer(sessionId, currentQuestion.id, decision, timeTakenMs);
+      const result = await evaluateAnswer(currentQuestion, decision, nickname);
+
+      const gameAnswer: GameAnswer = {
+        questionId: currentQuestion.id,
+        decision,
+        outcome: result.outcome,
+        timeMs: timeTakenMs,
+      };
+      answerQuestion(gameAnswer);
 
       setOutcome({
         outcome: result.outcome,
@@ -68,18 +72,19 @@ export default function GameClient({ session }: { session: GameSession }) {
 
       setTimeout(() => {
         setShowConfetti(false);
-        if (result.isFinished) {
+        const isFinished = currentQuestionIndex + 1 >= questions.length;
+        if (isFinished) {
           finishGame();
-          router.push(`/results/${sessionId}`);
+          router.push(`/results`);
         } else {
           nextQuestion();
         }
       }, 2500); // Show outcome for 2.5 seconds
     },
-    [status, sessionId, currentQuestion, answerQuestion, showOutcome, nextQuestion, finishGame, router]
+    [status, nickname, currentQuestion, answerQuestion, showOutcome, nextQuestion, finishGame, router, currentQuestionIndex, questions.length]
   );
   
-  if (!sessionId || !currentQuestion) {
+  if (status === 'pending' || !currentQuestion) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-background">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />

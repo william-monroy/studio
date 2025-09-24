@@ -11,13 +11,14 @@ import {
 import type { ScoreEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Crown } from "lucide-react";
+import { useGameStore } from "@/store/game-store";
 
 type LeaderboardTableProps = {
   scores: ScoreEntry[];
-  currentSessionId?: string;
 };
 
-export function LeaderboardTable({ scores, currentSessionId }: LeaderboardTableProps) {
+export function LeaderboardTable({ scores }: LeaderboardTableProps) {
+  const nickname = useGameStore(state => state.nickname);
   return (
     <div className="rounded-lg border shadow-md">
       <Table>
@@ -31,7 +32,7 @@ export function LeaderboardTable({ scores, currentSessionId }: LeaderboardTableP
         </TableHeader>
         <TableBody>
           {scores.map((score, index) => (
-            <TableRow key={score.id} className={cn(score.sessionId === currentSessionId && "bg-primary/20 hover:bg-primary/30")}>
+            <TableRow key={score.id} className={cn(score.nickname === nickname && "bg-primary/20 hover:bg-primary/30")}>
               <TableCell className="text-center font-bold text-lg">
                 <div className="flex justify-center items-center">
                     {index === 0 && <Crown className="w-6 h-6 text-yellow-500 mr-2" />}

@@ -1,59 +1,70 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { GameSession, Question } from '@/lib/types';
+import type { Question, GameAnswer } from '@/lib/types';
 
 export type GameStatus = 'pending' | 'playing' | 'evaluating' | 'outcome' | 'finished';
 
 type GameState = {
-  nickname: string | null;
-  sessionId: string | null;
+  nickname: string;
   questions: Question[];
+  answers: GameAnswer[];
+  score: number;
+  totalTimeMs: number;
   currentQuestionIndex: number;
   status: GameStatus;
+
   setNickname: (nickname: string) => void;
-  startGame: (sessionId: string, questions: Question[]) => void;
-  answerQuestion: () => void;
+  startGame: (questions: Question[]) => void;
+  answerQuestion: (answer: GameAnswer) => void;
   showOutcome: () => void;
   nextQuestion: () => void;
   finishGame: () => void;
   reset: () => void;
 };
 
+const initialState = {
+  nickname: '',
+  questions: [],
+  answers: [],
+  score: 0,
+  totalTimeMs: 0,
+  currentQuestionIndex: 0,
+  status: 'pending' as GameStatus,
+};
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      nickname: null,
-      sessionId: null,
-      questions: [],
-      currentQuestionIndex: 0,
-      status: 'pending',
+      ...initialState,
       setNickname: (nickname) => set({ nickname }),
-      startGame: (sessionId, questions) =>
+      startGame: (questions) =>
         set({
-          sessionId,
+          ...initialState,
+          nickname: get().nickname, // Keep nickname from previous state
           questions,
-          currentQuestionIndex: 0,
           status: 'playing',
         }),
-      answerQuestion: () => set({ status: 'evaluating' }),
+      answerQuestion: (answer) => {
+        const isSuccess = answer.outcome === 'SUCCESS';
+        set((state) => ({
+          status: 'evaluating',
+          answers: [...state.answers, answer],
+          score: isSuccess ? state.score + 1 : state.score,
+          totalTimeMs: state.totalTimeMs + answer.timeMs,
+        }));
+      },
       showOutcome: () => set({ status: 'outcome' }),
       nextQuestion: () => {
         const nextIndex = get().currentQuestionIndex + 1;
         if (nextIndex < get().questions.length) {
           set({ currentQuestionIndex: nextIndex, status: 'playing' });
         } else {
-          set({ status: 'finished' });
+          get().finishGame();
         }
       },
       finishGame: () => set({ status: 'finished' }),
       reset: () =>
-        set({
-          nickname: null,
-          sessionId: null,
-          questions: [],
-          currentQuestionIndex: 0,
-          status: 'pending',
-        }),
+        set(initialState),
     }),
     {
       name: 'decision-verse-game-storage',

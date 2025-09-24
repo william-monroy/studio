@@ -30,8 +30,8 @@ export type GameSession = {
 };
 
 export type ScoreEntry = {
-  id: string;            // leaderboard doc id
-  sessionId: string;     // game session id
+  id?: string;            // leaderboard doc id
+  sessionId?: string;     // game session id
   nickname: string;
   score: number;
   totalTimeMs: number;

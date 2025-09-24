@@ -27,18 +27,18 @@ export function NicknameForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(startGame, null);
-  const setNickname = useGameStore((state) => state.setNickname);
-  const resetGame = useGameStore((state) => state.reset);
-  
+  const { setNickname, reset, startGame: startGameInStore } = useGameStore();
+
   useEffect(() => {
-    resetGame();
-  }, [resetGame]);
+    reset();
+  }, [reset]);
 
   useEffect(() => {
     if (!state) return;
 
-    if (state.success && state.sessionId) {
-      router.push(`/play?sessionId=${state.sessionId}`);
+    if (state.success && state.questions) {
+      startGameInStore(state.questions);
+      router.push('/play');
     } else if (state.error) {
       toast({
         variant: "destructive",
@@ -46,14 +46,13 @@ export function NicknameForm() {
         description: state.error,
       });
     }
-  }, [state, router, toast]);
-
+  }, [state, router, toast, startGameInStore]);
 
   const handleFormAction = (formData: FormData) => {
     const nickname = formData.get('nickname') as string;
     setNickname(nickname);
     formAction(formData);
-  }
+  };
 
   return (
     <Card className="shadow-2xl">

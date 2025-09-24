@@ -1,16 +1,16 @@
 'use client';
 
-import { getGameSession, getLeaderboard } from '@/lib/actions';
-import { redirect } from 'next/navigation';
+import { getLeaderboard, saveScore } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
 import { ResultsDisplay } from '@/components/game/results-display';
 import { LeaderboardTable } from '@/components/game/leaderboard-table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Gamepad, Home } from 'lucide-react';
-import { GameSession } from '@/lib/types';
 import { ScoreEntry } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGameStore } from '@/store/game-store';
 
 function LoadingSkeleton() {
   return (
@@ -29,60 +29,74 @@ function LoadingSkeleton() {
 }
 
 
-export default function ResultsPage({ params }: { params: { sessionId: string } }) {
-  const [session, setSession] = useState<GameSession | null>(null);
+export default function ResultsPage() {
+  const router = useRouter();
+  const { nickname, score, totalTimeMs, questions, answers, status, reset } = useGameStore();
+
   const [leaderboard, setLeaderboard] = useState<ScoreEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status !== 'finished') {
+      router.replace('/');
+      return;
+    }
+
     async function fetchData() {
       try {
-        const [sessionData, leaderboardData] = await Promise.all([
-          getGameSession(params.sessionId),
-          getLeaderboard()
-        ]);
-        
-        if (!sessionData) {
-          redirect('/');
-          return;
-        }
-
-        setSession(sessionData);
+        await saveScore({ nickname, score, totalTimeMs });
+        const leaderboardData = await getLeaderboard();
         setLeaderboard(leaderboardData);
-
       } catch (error) {
         console.error("Failed to fetch results data", error);
-        redirect('/');
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [params.sessionId]);
+  }, [status, router, nickname, score, totalTimeMs]);
 
-  if (loading || !session || !leaderboard) {
+  const handlePlayAgain = () => {
+    reset();
+    router.push('/');
+  }
+
+  if (loading || status !== 'finished') {
     return <LoadingSkeleton />;
+  }
+
+  const session = {
+      id: '',
+      nickname,
+      score,
+      totalTimeMs,
+      questions,
+      answers,
+      startedAt: 0,
+      currentQuestionIndex: 0
   }
 
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 min-h-screen">
       <ResultsDisplay session={session} />
       
-      <div className="my-12">
-        <h2 className="text-4xl font-headline font-bold text-center text-primary mb-6">
-          Tabla de Líderes
-        </h2>
-        <LeaderboardTable scores={leaderboard} currentSessionId={session.id} />
-      </div>
+      {leaderboard && (
+        <div className="my-12">
+          <h2 className="text-4xl font-headline font-bold text-center text-primary mb-6">
+            Tabla de Líderes
+          </h2>
+          <LeaderboardTable scores={leaderboard} />
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
-        <Button asChild size="lg">
+        <Button asChild size="lg" onClick={handlePlayAgain}>
           <Link href="/">
             <Home className="mr-2 h-5 w-5" />
             Volver al Inicio
           </Link>
         </Button>
-        <Button asChild size="lg" variant="secondary">
+        <Button asChild size="lg" variant="secondary" onClick={handlePlayAgain}>
           <Link href="/">
             <Gamepad className="mr-2 h-5 w-5" />
             Jugar de Nuevo
