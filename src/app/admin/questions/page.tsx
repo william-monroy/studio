@@ -1,3 +1,7 @@
+// Server Component Page
+import { getQuestions } from "@/lib/actions";
+
+// Client Component for UI and Interactivity
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -103,10 +107,6 @@ function AdminQuestionsClient({ questions }: { questions: Question[] }) {
         </>
     );
 }
-
-
-// Server Component Page
-import { getQuestions } from "@/lib/actions";
 
 export default async function AdminQuestionsPage() {
     const questions = await getQuestions();
