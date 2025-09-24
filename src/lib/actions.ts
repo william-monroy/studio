@@ -163,14 +163,13 @@ export async function createQuestion(prevState: FormState, formData: FormData): 
             order: newOrder,
             updatedAt: Date.now(),
         });
-        revalidatePath('/admin/questions');
         return { error: null, success: true };
     } catch (e) {
         return { error: { _general: ['Error al crear la pregunta. Inténtalo de nuevo.'] } };
     }
 }
 
-export async function updateQuestion(id: string, prevState: any, formData: FormData) {
+export async function updateQuestion(id: string, prevState: any, formData: FormData): Promise<FormState> {
     const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validation.success) {
@@ -182,12 +181,10 @@ export async function updateQuestion(id: string, prevState: any, formData: FormD
             ...validation.data,
             updatedAt: Date.now(),
         });
+        return { error: null, success: true };
     } catch (e) {
-        return { error: { _general: 'Error al actualizar la pregunta. Inténtalo de nuevo.' } };
+        return { error: { _general: ['Error al actualizar la pregunta. Inténtalo de nuevo.'] } };
     }
-    revalidatePath('/admin/questions');
-    revalidatePath(`/admin/questions/${id}`);
-    redirect('/admin/questions');
 }
 
 export async function deleteQuestion(id: string) {
