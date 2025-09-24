@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "success-1",
+      "description": "A person celebrating a success",
+      "imageUrl": "https://images.unsplash.com/photo-1611331023516-6ec931575ecc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjZWxlYnJhdGlvbiUyMHN1Y2Nlc3N8ZW58MHx8fHwxNzU4NjAyMzcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "celebration success"
+    },
+    {
+      "id": "success-2",
+      "description": "Fireworks indicating a great achievement",
+      "imageUrl": "https://images.unsplash.com/photo-1562355857-0d1a85ca73dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxmaXJld29ya3MlMjBhY2hpZXZlbWVudHxlbnwwfHx8fDE3NTg2OTA3MDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fireworks achievement"
+    },
+    {
+      "id": "success-3",
+      "description": "A thumbs up gesture",
+      "imageUrl": "https://images.unsplash.com/photo-1580893211123-627e0262be3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0aHVtYnMlMjB1cHxlbnwwfHx8fDE3NTg2MDgyMTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "thumbs up"
+    },
+    {
+      "id": "fail-1",
+      "description": "A person looking disappointed",
+      "imageUrl": "https://images.unsplash.com/photo-1758525747620-00284612bffc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkaXNhcHBvaW50ZWQlMjBmYWlsdXJlfGVufDB8fHx8MTc1ODY5MDcwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "disappointed failure"
+    },
+    {
+      "id": "fail-2",
+      "description": "An explosion representing a failure",
+      "imageUrl": "https://images.unsplash.com/photo-1561311943-3c6efcf0cba7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxleHBsb3Npb24lMjBmYWlsfGVufDB8fHx8MTc1ODY5MDcwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "explosion fail"
+    },
+    {
+      "id": "fail-3",
+      "description": "A facepalm gesture",
+      "imageUrl": "https://images.unsplash.com/photo-1691057117716-2fc49700ba47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmYWNlcGFsbSUyMGVycm9yfGVufDB8fHx8MTc1ODY5MDcwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "facepalm error"
+    }
+  ]
 }
