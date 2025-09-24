@@ -1,17 +1,67 @@
+'use client';
+
 import { getGameSession, getLeaderboard } from '@/lib/actions';
 import { redirect } from 'next/navigation';
 import { ResultsDisplay } from '@/components/game/results-display';
 import { LeaderboardTable } from '@/components/game/leaderboard-table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Gamepad, Home } from 'lucide-radix-icons';
+import { Gamepad, Home } from 'lucide-react';
+import { GameSession } from '@/lib/types';
+import { ScoreEntry } from '@/lib/types';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function ResultsPage({ params }: { params: { sessionId: string } }) {
-  const session = await getGameSession(params.sessionId);
-  const leaderboard = await getLeaderboard();
+function LoadingSkeleton() {
+  return (
+    <div className="container mx-auto max-w-4xl py-12 px-4 min-h-screen">
+      <Skeleton className="h-64 w-full" />
+      <div className="my-12">
+        <Skeleton className="h-12 w-1/2 mx-auto mb-6" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+       <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
+        <Skeleton className="h-12 w-48" />
+        <Skeleton className="h-12 w-48" />
+      </div>
+    </div>
+  )
+}
 
-  if (!session) {
-    redirect('/');
+
+export default function ResultsPage({ params }: { params: { sessionId: string } }) {
+  const [session, setSession] = useState<GameSession | null>(null);
+  const [leaderboard, setLeaderboard] = useState<ScoreEntry[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [sessionData, leaderboardData] = await Promise.all([
+          getGameSession(params.sessionId),
+          getLeaderboard()
+        ]);
+        
+        if (!sessionData) {
+          redirect('/');
+          return;
+        }
+
+        setSession(sessionData);
+        setLeaderboard(leaderboardData);
+
+      } catch (error) {
+        console.error("Failed to fetch results data", error);
+        redirect('/');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [params.sessionId]);
+
+  if (loading || !session || !leaderboard) {
+    return <LoadingSkeleton />;
   }
 
   return (
