@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { User, Play } from 'lucide-react';
 
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGameStore } from '@/store/game-store';
+import { useToast } from '@/hooks/use-toast';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -22,13 +24,30 @@ function SubmitButton() {
 }
 
 export function NicknameForm() {
-  const [state, formAction] = useActionState(startGame, { error: null });
+  const router = useRouter();
+  const { toast } = useToast();
+  const [state, formAction, isPending] = useActionState(startGame, null);
   const setNickname = useGameStore((state) => state.setNickname);
   const resetGame = useGameStore((state) => state.reset);
   
   useEffect(() => {
     resetGame();
   }, [resetGame]);
+
+  useEffect(() => {
+    if (!state) return;
+
+    if (state.success && state.sessionId) {
+      router.push(`/play?sessionId=${state.sessionId}`);
+    } else if (state.error) {
+      toast({
+        variant: "destructive",
+        title: "Error al iniciar el juego",
+        description: state.error,
+      });
+    }
+  }, [state, router, toast]);
+
 
   const handleFormAction = (formData: FormData) => {
     const nickname = formData.get('nickname') as string;
@@ -57,13 +76,13 @@ export function NicknameForm() {
             />
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
-          {state?.error && (
+          {state?.error && !isPending && (
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-2 text-sm font-medium text-destructive"
             >
-              {state.error}
+              {/* Error is now shown in a toast */}
             </motion.p>
           )}
         </CardContent>

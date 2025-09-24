@@ -7,41 +7,47 @@ import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orde
 import { db } from './firebase';
 import type { GameAnswer, GameSession, ScoreEntry, Question } from './types';
 
-// Mock leaderboard for initial data
-import { mockLeaderboard } from './mock-data';
-
 const nicknameSchema = z.string().min(2, "El nickname debe tener al menos 2 caracteres.").max(16, "El nickname no puede tener más de 16 caracteres.");
 
-export async function startGame(prevState: any, formData: FormData) {
+export async function startGame(prevState: any, formData: FormData): Promise<{success: boolean; sessionId?: string; error?: string;}> {
+  console.log("Attempting to start game...");
   const nickname = formData.get('nickname');
   const validation = nicknameSchema.safeParse(nickname);
 
   if (!validation.success) {
-    return { error: validation.error.errors[0].message };
+    const errorMessage = validation.error.errors[0].message;
+    console.error("Nickname validation failed:", errorMessage);
+    return { success: false, error: errorMessage };
   }
-
-  const questionsSnapshot = await getDocs(query(collection(db, 'questions'), where('active', '==', true), orderBy('order')));
-  const questions: Question[] = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
   
-  if (questions.length === 0) {
-      return { error: "No hay preguntas activas en este momento. Inténtalo más tarde." };
-  }
-
-  const newSession: Omit<GameSession, 'id'> = {
-    nickname: validation.data,
-    startedAt: Date.now(),
-    answers: [],
-    score: 0,
-    totalTimeMs: 0,
-    questions: questions,
-    currentQuestionIndex: 0,
-  };
-
   try {
+    const questionsSnapshot = await getDocs(query(collection(db, 'questions'), where('active', '==', true), orderBy('order')));
+    const questions: Question[] = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+    
+    if (questions.length === 0) {
+        console.warn("No active questions found.");
+        return { success: false, error: "No hay preguntas activas en este momento. Inténtalo más tarde." };
+    }
+
+    console.log(`Found ${questions.length} active questions.`);
+
+    const newSession: Omit<GameSession, 'id'> = {
+      nickname: validation.data,
+      startedAt: Date.now(),
+      answers: [],
+      score: 0,
+      totalTimeMs: 0,
+      questions: questions,
+      currentQuestionIndex: 0,
+    };
+
     const docRef = await addDoc(collection(db, 'sessions'), newSession);
-    redirect(`/play?sessionId=${docRef.id}`);
-  } catch (error) {
-    return { error: 'No se pudo iniciar el juego. Inténtalo de nuevo.' };
+    console.log("Game session created successfully with ID:", docRef.id);
+    return { success: true, sessionId: docRef.id };
+
+  } catch (error: any) {
+    console.error('Failed to start game session:', error);
+    return { success: false, error: 'No se pudo conectar con el servidor. Inténtalo de nuevo.' };
   }
 }
 
@@ -136,28 +142,6 @@ export async function getLeaderboard(): Promise<ScoreEntry[]> {
     const snapshot = await getDocs(leaderboardQuery);
     
     let scores: ScoreEntry[] = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
-
-    // If leaderboard is empty, populate with mock data for demonstration
-    if (scores.length === 0 && mockLeaderboard.length > 0) {
-        for (const entry of mockLeaderboard) {
-            // Use a consistent but unique ID for mock entries to avoid duplicates on reload
-            const mockSessionId = `mock-${entry.nickname.replace(/\s+/g, '-')}`;
-            const newEntry: Omit<ScoreEntry, 'id'> = {
-                sessionId: mockSessionId,
-                nickname: entry.nickname,
-                score: entry.score,
-                totalTimeMs: entry.totalTimeMs,
-                createdAt: entry.createdAt,
-            };
-            const docRef = await addDoc(collection(db, 'leaderboard'), newEntry);
-            scores.push({ id: docRef.id, ...newEntry });
-        }
-        // Re-sort after adding
-        scores.sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            return a.totalTimeMs - b.totalTimeMs;
-        });
-    }
     
     return scores;
 }
@@ -201,6 +185,7 @@ export async function createQuestion(prevState: any, formData: FormData) {
             order: newOrder,
             updatedAt: Date.now(),
         });
+        revalidatePath('/admin/questions');
         redirect('/admin/questions');
     } catch (e) {
         return { error: { _general: 'Error al crear la pregunta. Inténtalo de nuevo.' } };
@@ -219,6 +204,8 @@ export async function updateQuestion(id: string, prevState: any, formData: FormD
             ...validation.data,
             updatedAt: Date.now(),
         });
+        revalidatePath('/admin/questions');
+        revalidatePath(`/admin/questions/${id}`);
         redirect('/admin/questions');
     } catch (e) {
         return { error: { _general: 'Error al actualizar la pregunta. Inténtalo de nuevo.' } };
@@ -228,9 +215,13 @@ export async function updateQuestion(id: string, prevState: any, formData: FormD
 export async function deleteQuestion(id: string) {
     try {
         await deleteDoc(doc(db, 'questions', id));
+        revalidatePath('/admin/questions');
     } catch (e) {
         // In a real app, you'd want better error handling, maybe a toast notification.
         console.error("Failed to delete question", e);
     }
     redirect('/admin/questions');
 }
+
+// Revalidate path function to be added if not already present
+import { revalidatePath } from 'next/cache';
