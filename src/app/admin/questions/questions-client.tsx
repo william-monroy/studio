@@ -55,13 +55,13 @@ export default function AdminQuestionsClient({ questions }: { questions: Questio
     return (
         <>
             <div className="flex items-center">
-                <h1 className="text-lg font-semibold md:text-2xl font-headline">Questions</h1>
+                <h1 className="text-lg font-semibold md:text-2xl font-headline">Preguntas</h1>
                 <div className="ml-auto flex items-center gap-2">
                     <Button size="sm" className="h-8 gap-1" asChild>
                         <Link href="/admin/questions/new">
                             <PlusCircle className="h-3.5 w-3.5" />
                             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                Add Question
+                                Añadir Pregunta
                             </span>
                         </Link>
                     </Button>
@@ -69,25 +69,25 @@ export default function AdminQuestionsClient({ questions }: { questions: Questio
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Game Questions</CardTitle>
-                    <CardDescription>Manage the questions for DecisionVerse.</CardDescription>
+                    <CardTitle>Preguntas del Juego</CardTitle>
+                    <CardDescription>Gestiona las preguntas para DecisionVerse.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Question Text</TableHead>
-                                <TableHead className="text-right">Success Prob.</TableHead>
-                                <TableHead className="text-right">Time Limit</TableHead>
-                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead>Texto de la Pregunta</TableHead>
+                                <TableHead className="text-right">Prob. de Éxito</TableHead>
+                                <TableHead className="text-right">Límite de Tiempo</TableHead>
+                                <TableHead><span className="sr-only">Acciones</span></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {questions.map((q) => (
                                 <TableRow key={q.id}>
                                     <TableCell>
-                                        <Badge variant={q.active ? "default" : "secondary"}>{q.active ? "Active" : "Inactive"}</Badge>
+                                        <Badge variant={q.active ? "default" : "secondary"}>{q.active ? "Activa" : "Inactiva"}</Badge>
                                     </TableCell>
                                     <TableCell className="font-medium max-w-sm truncate">{q.text}</TableCell>
                                     <TableCell className="text-right">{q.successProb}</TableCell>
@@ -101,11 +101,11 @@ export default function AdminQuestionsClient({ questions }: { questions: Questio
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                                 <DropdownMenuItem asChild>
                                                     <Link href={`/admin/questions/${q.id}`}>
                                                         <Edit className="mr-2 h-4 w-4" />
-                                                        Edit
+                                                        Editar
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
@@ -117,7 +117,7 @@ export default function AdminQuestionsClient({ questions }: { questions: Questio
                             ))}
                             {questions.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24">No questions found.</TableCell>
+                                    <TableCell colSpan={5} className="text-center h-24">No se encontraron preguntas.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
