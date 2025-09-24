@@ -127,16 +127,20 @@ function LoadingSkeleton() {
     )
 }
 
-export default function EditQuestionPage({ params }: { params: { id: string } }) {
+function EditQuestionClient({ id }: { id: string }) {
     const [question, setQuestion] = useState<Question | null>(null);
 
     useEffect(() => {
-        getQuestion(params.id).then(setQuestion);
-    }, [params.id]);
+        getQuestion(id).then(setQuestion);
+    }, [id]);
 
     if (!question) {
         return <LoadingSkeleton />;
     }
 
     return <EditQuestionForm question={question} />;
+}
+
+export default function EditQuestionPage({ params }: { params: { id: string } }) {
+    return <EditQuestionClient id={params.id} />;
 }
