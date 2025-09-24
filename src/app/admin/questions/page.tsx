@@ -13,20 +13,30 @@ import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Question } from "@/lib/types";
+import { useTransition } from "react";
 
 function DeleteAction({ id }: { id: string }) {
-    const handleDelete = async () => {
-      // We wrap the server action call in a function to handle potential errors
-      // and to refresh the page to reflect the deletion.
-      // This is a simple way to re-fetch data on the client.
-      await deleteQuestion(id);
-      window.location.reload();
+    const [isPending, startTransition] = useTransition();
+
+    const handleDelete = () => {
+        startTransition(async () => {
+            await deleteQuestion(id);
+        });
     };
 
     return (
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleDelete} className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleDelete} className="text-destructive" disabled={isPending}>
+            {isPending ? (
+                <>
+                    <MoreHorizontal className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                </>
+            ) : (
+                <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                </>
+            )}
         </DropdownMenuItem>
     );
 }
