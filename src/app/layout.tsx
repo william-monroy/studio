@@ -2,11 +2,17 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
+import { initializeDatabase } from '@/lib/init-db';
 
 export const metadata: Metadata = {
   title: 'DecisionVerse',
   description: 'A game of choices and consequences.',
 };
+
+// Run DB initialization on server start in dev mode
+if (process.env.NODE_ENV === 'development') {
+  initializeDatabase();
+}
 
 export default function RootLayout({
   children,

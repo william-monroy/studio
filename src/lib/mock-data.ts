@@ -1,8 +1,10 @@
 import type { Question, ScoreEntry } from './types';
 
-export const mockQuestions: Question[] = [
+// This data will be used to populate Firestore if it's empty.
+// After first run, data will be managed in the Admin panel.
+
+export const mockQuestions: Omit<Question, 'id'>[] = [
   {
-    id: 'q1',
     text: '¿Invertir en propiedades en el metaverso?',
     successProb: 0.6,
     timeLimitSec: 15,
@@ -13,7 +15,6 @@ export const mockQuestions: Question[] = [
     updatedAt: Date.now(),
   },
   {
-    id: 'q2',
     text: '¿Lanzar una línea de zapatillas exclusivas para avatares?',
     successProb: 0.5,
     timeLimitSec: 15,
@@ -24,7 +25,6 @@ export const mockQuestions: Question[] = [
     updatedAt: Date.now(),
   },
   {
-    id: 'q3',
     text: '¿Reemplazar al equipo de soporte con IAs conversacionales?',
     successProb: 0.3,
     timeLimitSec: 10,
@@ -35,7 +35,6 @@ export const mockQuestions: Question[] = [
     updatedAt: Date.now(),
   },
   {
-    id: 'q4',
     text: '¿Deberíamos cambiar nuestro logo a un meme popular?',
     successProb: 0.2,
     timeLimitSec: 10,
@@ -46,7 +45,6 @@ export const mockQuestions: Question[] = [
     updatedAt: Date.now(),
   },
   {
-    id: 'q5',
     text: '¿Fusionar nuestra base de datos con una hoja de cálculo gigante?',
     successProb: 0.1,
     timeLimitSec: 15,
@@ -58,10 +56,10 @@ export const mockQuestions: Question[] = [
   },
 ];
 
-export const mockLeaderboard: ScoreEntry[] = [
-  { id: 's1', nickname: 'PlayerOne', score: 5, totalTimeMs: 35000, createdAt: Date.now() - 100000 },
-  { id: 's2', nickname: 'CosmicRider', score: 4, totalTimeMs: 28000, createdAt: Date.now() - 200000 },
-  { id: 's3', nickname: 'DataQueen', score: 4, totalTimeMs: 32000, createdAt: Date.now() - 50000 },
-  { id: 's4', nickname: 'SynthWave', score: 3, totalTimeMs: 40000, createdAt: Date.now() - 300000 },
-  { id: 's5', nickname: 'LogicLord', score: 2, totalTimeMs: 25000, createdAt: Date.now() - 150000 },
+export const mockLeaderboard: Omit<ScoreEntry, 'id'>[] = [
+  { sessionId: 's1', nickname: 'PlayerOne', score: 5, totalTimeMs: 35000, createdAt: Date.now() - 100000 },
+  { sessionId: 's2', nickname: 'CosmicRider', score: 4, totalTimeMs: 28000, createdAt: Date.now() - 200000 },
+  { sessionId: 's3', nickname: 'DataQueen', score: 4, totalTimeMs: 32000, createdAt: Date.now() - 50000 },
+  { sessionId: 's4', nickname: 'SynthWave', score: 3, totalTimeMs: 40000, createdAt: Date.now() - 300000 },
+  { sessionId: 's5', nickname: 'LogicLord', score: 2, totalTimeMs: 25000, createdAt: Date.now() - 150000 },
 ];

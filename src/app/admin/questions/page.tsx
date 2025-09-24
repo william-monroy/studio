@@ -1,11 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { getQuestions } from "@/lib/actions";
+import { getQuestions, deleteQuestion } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+
+async function DeleteAction({ id }: { id: string }) {
+    return (
+      <form action={async () => { 'use server'; await deleteQuestion(id); }}>
+        <button type="submit" className="w-full text-left">
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </button>
+      </form>
+    );
+  }
 
 export default async function AdminQuestionsPage() {
     const questions = await getQuestions();
@@ -60,8 +73,14 @@ export default async function AdminQuestionsPage() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                                <DropdownMenuItem>Delete</DropdownMenuItem>
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/admin/questions/${q.id}`}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DeleteAction id={q.id} />
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

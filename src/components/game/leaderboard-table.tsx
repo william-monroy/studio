@@ -31,7 +31,7 @@ export function LeaderboardTable({ scores, currentSessionId }: LeaderboardTableP
         </TableHeader>
         <TableBody>
           {scores.map((score, index) => (
-            <TableRow key={score.id} className={cn(score.id === currentSessionId && "bg-primary/20 hover:bg-primary/30")}>
+            <TableRow key={score.id} className={cn(score.sessionId === currentSessionId && "bg-primary/20 hover:bg-primary/30")}>
               <TableCell className="text-center font-bold text-lg">
                 <div className="flex justify-center items-center">
                     {index === 0 && <Crown className="w-6 h-6 text-yellow-500 mr-2" />}

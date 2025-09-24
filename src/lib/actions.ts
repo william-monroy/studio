@@ -3,12 +3,12 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { evaluateAnswerFeedback } from '@/ai/flows/evaluate-answer-feedback';
-import { mockQuestions, mockLeaderboard } from './mock-data';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
+import { db } from './firebase';
 import type { GameAnswer, GameSession, ScoreEntry, Question } from './types';
 
-// Mock database
-const gameSessions: Map<string, GameSession> = new Map();
-const scores: ScoreEntry[] = [...mockLeaderboard];
+// Mock leaderboard for initial data
+import { mockLeaderboard } from './mock-data';
 
 const nicknameSchema = z.string().min(2, "El nickname debe tener al menos 2 caracteres.").max(16, "El nickname no puede tener más de 16 caracteres.");
 
@@ -20,11 +20,14 @@ export async function startGame(prevState: any, formData: FormData) {
     return { error: validation.error.errors[0].message };
   }
 
-  const sessionId = crypto.randomUUID();
-  const questions = [...mockQuestions].filter(q => q.active).sort((a, b) => a.order - b.order);
+  const questionsSnapshot = await getDocs(query(collection(db, 'questions'), where('active', '==', true), orderBy('order')));
+  const questions: Question[] = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+  
+  if (questions.length === 0) {
+      return { error: "No hay preguntas activas en este momento. Inténtalo más tarde." };
+  }
 
-  const newSession: GameSession = {
-    id: sessionId,
+  const newSession: Omit<GameSession, 'id'> = {
     nickname: validation.data,
     startedAt: Date.now(),
     answers: [],
@@ -34,20 +37,25 @@ export async function startGame(prevState: any, formData: FormData) {
     currentQuestionIndex: 0,
   };
 
-  gameSessions.set(sessionId, newSession);
+  const docRef = await addDoc(collection(db, 'sessions'), newSession);
 
-  redirect(`/play?sessionId=${sessionId}`);
+  redirect(`/play?sessionId=${docRef.id}`);
 }
 
 export async function evaluateAnswer(sessionId: string, questionId: string, decision: 'YES' | 'NO', timeTakenMs: number) {
-  const session = gameSessions.get(sessionId);
-  const question = mockQuestions.find(q => q.id === questionId);
+  const sessionDoc = doc(db, 'sessions', sessionId);
+  const sessionSnapshot = await getDoc(sessionDoc);
+  const questionDoc = doc(db, 'questions', questionId);
+  const questionSnapshot = await getDoc(questionDoc);
 
-  if (!session || !question) {
+
+  if (!sessionSnapshot.exists() || !questionSnapshot.exists()) {
     throw new Error('Invalid session or question ID');
   }
 
-  // Securely determine outcome on the server
+  const session = sessionSnapshot.data() as GameSession;
+  const question = { id: questionSnapshot.id, ...questionSnapshot.data() } as Question;
+
   const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff;
   const outcome = randomValue < question.successProb ? 'SUCCESS' : 'FAIL';
   
@@ -65,20 +73,25 @@ export async function evaluateAnswer(sessionId: string, questionId: string, deci
     timeMs: timeTakenMs,
   };
 
-  session.answers.push(answer);
-  session.totalTimeMs += timeTakenMs;
-  if (outcome === 'SUCCESS') {
-    session.score += 1;
-  }
-  session.currentQuestionIndex += 1;
+  const updatedAnswers = [...session.answers, answer];
+  const updatedTime = session.totalTimeMs + timeTakenMs;
+  const updatedScore = outcome === 'SUCCESS' ? session.score + 1 : session.score;
+  const updatedIndex = session.currentQuestionIndex + 1;
 
-  gameSessions.set(sessionId, session);
+  const isFinished = updatedIndex >= session.questions.length;
+
+  await updateDoc(sessionDoc, {
+    answers: updatedAnswers,
+    totalTimeMs: updatedTime,
+    score: updatedScore,
+    currentQuestionIndex: updatedIndex,
+    ...(isFinished && { endedAt: Date.now() })
+  });
 
   const mediaUrl = outcome === 'SUCCESS' ? question.mediaPosUrl : question.mediaNegUrl;
   
-  const isFinished = session.currentQuestionIndex >= session.questions.length;
   if(isFinished) {
-    await finishGame(sessionId);
+    await finishGame(sessionId, session);
   }
 
   return {
@@ -89,46 +102,117 @@ export async function evaluateAnswer(sessionId: string, questionId: string, deci
   };
 }
 
-export async function finishGame(sessionId: string) {
-    const session = gameSessions.get(sessionId);
-    if (!session) {
-        throw new Error('Invalid session ID');
-    }
-
-    session.endedAt = Date.now();
-
-    const newScore: ScoreEntry = {
-        id: session.id,
-        nickname: session.nickname,
-        score: session.score,
-        totalTimeMs: session.totalTimeMs,
-        createdAt: session.endedAt,
+export async function finishGame(sessionId: string, sessionData: GameSession) {
+    const newScore: Omit<ScoreEntry, 'id'> = {
+        sessionId: sessionId,
+        nickname: sessionData.nickname,
+        score: sessionData.score,
+        totalTimeMs: sessionData.totalTimeMs,
+        createdAt: sessionData.endedAt || Date.now(),
     };
 
-    scores.push(newScore);
-    // Sort scores: score desc, time asc, date desc
-    scores.sort((a, b) => {
-        if (b.score !== a.score) {
-        return b.score - a.score;
-        }
-        if (a.totalTimeMs !== b.totalTimeMs) {
-        return a.totalTimeMs - b.totalTimeMs;
-        }
-        return b.createdAt - a.createdAt;
-    });
-
-    gameSessions.set(sessionId, session);
+    await addDoc(collection(db, 'leaderboard'), newScore);
 }
 
 
 export async function getGameSession(sessionId: string): Promise<GameSession | null> {
-    return gameSessions.get(sessionId) || null;
+    const sessionDoc = await getDoc(doc(db, 'sessions', sessionId));
+    if (!sessionDoc.exists()) {
+        return null;
+    }
+    return { id: sessionDoc.id, ...sessionDoc.data() } as GameSession;
 }
 
 export async function getLeaderboard(): Promise<ScoreEntry[]> {
-    return scores.slice(0, 50);
+    const leaderboardQuery = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), orderBy('totalTimeMs', 'asc'), orderBy('createdAt', 'desc'), limit(50));
+    const snapshot = await getDocs(leaderboardQuery);
+    
+    const scores: ScoreEntry[] = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
+
+    // If leaderboard is empty, populate with mock data for demonstration
+    if (scores.length === 0) {
+        for (const entry of mockLeaderboard) {
+            await addDoc(collection(db, 'leaderboard'), { ...entry, sessionId: entry.id });
+        }
+        const newSnapshot = await getDocs(leaderboardQuery);
+        return newSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as ScoreEntry);
+    }
+    
+    return scores;
 }
 
 export async function getQuestions(): Promise<Question[]> {
-    return mockQuestions.filter(q => q.active).sort((a, b) => a.order - b.order);
+    const questionsSnapshot = await getDocs(query(collection(db, 'questions'), orderBy('order')));
+    return questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+}
+
+export async function getQuestion(id: string): Promise<Question | null> {
+    const questionDoc = await getDoc(doc(db, 'questions', id));
+    if (!questionDoc.exists()) {
+        return null;
+    }
+    return { id: questionDoc.id, ...questionDoc.data() } as Question;
+}
+
+const questionSchema = z.object({
+    text: z.string().min(10, 'Question text must be at least 10 characters long.'),
+    successProb: z.coerce.number().min(0).max(1),
+    timeLimitSec: z.coerce.number().int().min(5),
+    mediaPosUrl: z.string().url('Please enter a valid URL.'),
+    mediaNegUrl: z.string().url('Please enter a valid URL.'),
+});
+
+export async function createQuestion(prevState: any, formData: FormData) {
+    const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!validation.success) {
+        return { error: validation.error.flatten().fieldErrors };
+    }
+    
+    const questionsCollection = collection(db, "questions");
+    const questionsSnapshot = await getDocs(questionsCollection);
+    const newOrder = questionsSnapshot.size + 1;
+
+    try {
+        await addDoc(questionsCollection, {
+            ...validation.data,
+            active: true,
+            order: newOrder,
+            updatedAt: Date.now(),
+        });
+        redirect('/admin/questions');
+    } catch (e) {
+        return { error: { _general: 'Failed to create question. Please try again.' } };
+    }
+}
+
+export async function updateQuestion(id: string, prevState: any, formData: FormData) {
+    const validation = questionSchema.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!validation.success) {
+        return { error: validation.error.flatten().fieldErrors };
+    }
+
+    try {
+        await updateDoc(doc(db, 'questions', id), {
+            ...validation.data,
+            updatedAt: Date.now(),
+        });
+        redirect('/admin/questions');
+    } catch (e) {
+        return { error: { _general: 'Failed to update question. Please try again.' } };
+    }
+}
+
+export async function deleteQuestion(id: string) {
+    try {
+        await updateDoc(doc(db, 'questions', id), {
+            active: false,
+            updatedAt: Date.now(),
+        });
+        redirect('/admin/questions');
+    } catch (e) {
+        // Handle error, maybe show a toast
+        console.error("Failed to delete question", e);
+    }
 }

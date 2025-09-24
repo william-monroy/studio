@@ -20,8 +20,7 @@ export default async function PlayPage({ searchParams }: { searchParams: { sessi
     const session = await getGameSession(sessionId);
 
     if (!session) {
-        // This might happen on page refresh if the server restarts and loses the in-memory session.
-        // In a real app with a DB, this would be more robust.
+        // This might happen if the session ID is invalid or not found in the DB.
         redirect('/');
     }
     
