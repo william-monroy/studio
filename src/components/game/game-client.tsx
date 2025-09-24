@@ -86,15 +86,25 @@ export default function GameClient() {
     async (decision: 'YES' | 'NO', timeTakenMs: number) => {
       if (status !== 'playing' || !nickname || !currentQuestion) return;
 
-      const result = await evaluateAnswer(currentQuestion, decision, nickname);
-
-      const gameAnswer: GameAnswer = {
+      const gameAnswerTemplate: Omit<GameAnswer, 'outcome'> = {
         questionId: currentQuestion.id,
         decision,
-        outcome: result.outcome,
         timeMs: timeTakenMs,
       };
-      answerQuestion(gameAnswer);
+
+      // Set status to evaluating immediately to provide user feedback
+      answerQuestion(gameAnswerTemplate);
+
+      const result = await evaluateAnswer(currentQuestion, decision, nickname);
+
+      const fullAnswer: GameAnswer = { ...gameAnswerTemplate, outcome: result.outcome };
+      
+      // Update the store with the final outcome
+      useGameStore.setState(state => {
+        const newAnswers = state.answers.map(a => a.questionId === fullAnswer.questionId ? fullAnswer : a);
+        const newScore = newAnswers.filter(a => a.outcome === 'SUCCESS').length;
+        return { answers: newAnswers, score: newScore };
+      });
 
       setOutcome({
         outcome: result.outcome,

@@ -3,9 +3,9 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { evaluateAnswerFeedback } from '@/ai/flows/evaluate-answer-feedback';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, orderBy, limit, deleteDoc, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
-import type { GameAnswer, GameSession, ScoreEntry, Question } from './types';
+import type { ScoreEntry, Question } from './types';
 import { revalidatePath } from 'next/cache';
 
 const nicknameSchema = z.string().min(2, "El nickname debe tener al menos 2 caracteres.").max(16, "El nickname no puede tener más de 16 caracteres.");
@@ -65,20 +65,45 @@ export async function evaluateAnswer(
 }
 
 export async function saveScore(scoreData: {nickname: string, score: number, totalTimeMs: number}) {
-  const newScore: Omit<ScoreEntry, 'id'> = {
-    nickname: scoreData.nickname,
-    score: scoreData.score,
-    totalTimeMs: scoreData.totalTimeMs,
-    createdAt: Date.now(),
-  };
+  const { nickname, score, totalTimeMs } = scoreData;
+  const leaderboardCol = collection(db, 'leaderboard');
 
   try {
-    // We don't need to revalidate with real-time updates
-    await addDoc(collection(db, 'leaderboard'), newScore);
-    console.log("Score saved successfully for", scoreData.nickname);
+    await runTransaction(db, async (transaction) => {
+      const q = query(leaderboardCol, where('nickname', '==', nickname));
+      const existingScores = await transaction.get(q);
+
+      if (existingScores.empty) {
+        // New player, add their score
+        const newScoreRef = doc(leaderboardCol);
+        transaction.set(newScoreRef, {
+          nickname,
+          score,
+          totalTimeMs,
+          createdAt: Date.now(),
+        });
+        console.log(`New score saved for ${nickname}`);
+      } else {
+        // Existing player, check if new score is better
+        const existingDoc = existingScores.docs[0];
+        const existingScoreData = existingDoc.data() as ScoreEntry;
+        
+        if (score > existingScoreData.score || (score === existingScoreData.score && totalTimeMs < existingScoreData.totalTimeMs)) {
+          transaction.update(existingDoc.ref, {
+            score,
+            totalTimeMs,
+            createdAt: Date.now(),
+          });
+          console.log(`High score updated for ${nickname}`);
+        } else {
+          console.log(`Score for ${nickname} is not a high score. Not updating.`);
+        }
+      }
+    });
+
     return { success: true };
   } catch (error) {
-    console.error("Failed to save score", error);
+    console.error("Failed to save score transaction", error);
     return { success: false, error: 'Could not save score to leaderboard.'};
   }
 }

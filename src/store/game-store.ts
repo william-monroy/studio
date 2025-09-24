@@ -7,7 +7,7 @@ export type GameStatus = 'pending' | 'playing' | 'evaluating' | 'outcome' | 'fin
 type GameState = {
   nickname: string;
   questions: Question[];
-  answers: GameAnswer[];
+  answers: Partial<GameAnswer>[];
   score: number;
   totalTimeMs: number;
   currentQuestionIndex: number;
@@ -15,7 +15,7 @@ type GameState = {
 
   setNickname: (nickname: string) => void;
   startGame: (questions: Question[]) => void;
-  answerQuestion: (answer: GameAnswer) => void;
+  answerQuestion: (answer: Partial<GameAnswer>) => void;
   showOutcome: () => void;
   nextQuestion: () => void;
   finishGame: () => void;
@@ -45,12 +45,10 @@ export const useGameStore = create<GameState>()(
           status: 'playing',
         }),
       answerQuestion: (answer) => {
-        const isSuccess = answer.outcome === 'SUCCESS';
         set((state) => ({
           status: 'evaluating',
           answers: [...state.answers, answer],
-          score: isSuccess ? state.score + 1 : state.score,
-          totalTimeMs: state.totalTimeMs + answer.timeMs,
+          totalTimeMs: state.totalTimeMs + (answer.timeMs ?? 0),
         }));
       },
       showOutcome: () => set({ status: 'outcome' }),
