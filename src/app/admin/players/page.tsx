@@ -11,22 +11,22 @@ export default async function AdminPlayersPage() {
     return (
         <>
             <div className="flex items-center">
-                <h1 className="text-lg font-semibold md:text-2xl font-headline">Players</h1>
+                <h1 className="text-lg font-semibold md:text-2xl font-headline">Jugadores</h1>
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>DecisionVerse Players</CardTitle>
-                    <CardDescription>List of all players and their best scores.</CardDescription>
+                    <CardTitle>Jugadores de DecisionVerse</CardTitle>
+                    <CardDescription>Lista de todos los jugadores y sus mejores puntajes.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Rank</TableHead>
+                                <TableHead>Rango</TableHead>
                                 <TableHead>Nickname</TableHead>
-                                <TableHead className="text-right">High Score</TableHead>
-                                <TableHead className="text-right">Best Time</TableHead>
-                                <TableHead>Last Played</TableHead>
+                                <TableHead className="text-right">Puntaje Máximo</TableHead>
+                                <TableHead className="text-right">Mejor Tiempo</TableHead>
+                                <TableHead>Última Partida</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -44,7 +44,7 @@ export default async function AdminPlayersPage() {
                              {players.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center h-24">
-                                        No players yet.
+                                        Aún no hay jugadores.
                                     </TableCell>
                                 </TableRow>
                             )}
